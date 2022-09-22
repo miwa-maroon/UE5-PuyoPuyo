@@ -23,7 +23,7 @@ AStagePawn::AStagePawn()
 	SpringArm->SetupAttachment(RootComponent);
 	Camera->SetupAttachment(SpringArm);
 
-	Camera->SetRelativeLocation(FVector(-600.0f, 0.0f, 0.0f));
+	Camera->SetRelativeLocation(FVector(-800.0f, 0.0f, 0.0f));
 
 }
 
@@ -57,8 +57,7 @@ void AStagePawn::Initialize(APuyoConfigActor* Config)
 	RootComponent->SetWorldScale3D(FVector(1.0, PuyoConfig-> StageCols, PuyoConfig->StageRows));
 
 	//Get PuyoMesh Actor
-	AActor* FoundActor = UGameplayStatics::GetActorOfClass(GetWorld(), APuyoMesh::StaticClass());
-	PuyoMesh = Cast<APuyoMesh>(FoundActor);
+	PuyoMesh = Cast<APuyoMesh>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoMesh::StaticClass()));
 
 	//Prepare memory
 	TArray<FPuyoMemoryData> ZeroArray;
@@ -97,12 +96,13 @@ void AStagePawn::SetPuyo(int Puyo, int32 y, int32 z)
 	if(PuyoMesh)
 	{
 		//Get PuyoMeshActor
-		PuyoMeshActor = PuyoMesh->GetPuyo(Puyo);
-		PuyoMeshActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoConfig->PuyoMeshWidth * y, PuyoConfig->PuyoMeshHeight * z));
+		AStaticMeshActor* FixedPuyoMeshActor = PuyoMesh->GetPuyo(Puyo);
+		FixedPuyoMeshActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoConfig->PuyoMeshWidth * y, PuyoConfig->PuyoMeshHeight * -z));
 
-		Board[z][y] = {Puyo, PuyoMeshActor};
+		Board[z][y] = {Puyo, FixedPuyoMeshActor};
 
 	}
+	ShowArray();
 }
 
 void AStagePawn::ShowArray()
@@ -150,9 +150,9 @@ bool AStagePawn::CheckFall()
 				}
 				//arrive destination
 				Board[Dst][y] = cell;
-				int PosY = y;
+				int32 PosY = y;
 				//append puyo to falling array
-				FallingPuyoArray.Push({cell, float(z) * PuyoConfig->PuyoMeshHeight, float(Dst) * PuyoConfig->PuyoMeshHeight, true});
+				FallingPuyoArray.Push({cell, z * PuyoConfig->PuyoMeshHeight, Dst * PuyoConfig->PuyoMeshHeight, true});
 				//record that puyo falled
 				bIsFalling = true;
 			}

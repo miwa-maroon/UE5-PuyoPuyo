@@ -36,7 +36,9 @@ private:
 	FString mode;
 	int frame;
 	int combinationCount = 0;
+	float time;
 
 	AStagePawn* StagePawn;
 	APuyoPlayerController* PuyoPlayerController;
+	APuyoMesh* PuyoMesh;
 };

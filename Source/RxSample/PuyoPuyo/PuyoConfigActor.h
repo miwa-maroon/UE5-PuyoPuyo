@@ -24,20 +24,20 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Puyo")
-	float PuyoMeshWidth = 100.0f; // = 1meter
-	float PuyoMeshHeight = 100.0f; // = 1meter
+	int32 PuyoMeshWidth = 100; // = 1meter
+	int32 PuyoMeshHeight = 100; // = 1meter
 
 	int32 StageCols = 6;
 	int32 StageRows = 12;
 
-	float FreeFallingSpeed = 1.0f;
+	float FreeFallingSpeed = 100.0f;
 	float ErasePuyoNum = 4;
 
 	
 	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Puyo")
 	int32 PuyoColors = 4;
-	float PlayerFallingSpeed = 0.9f;
+	float PlayerFallingSpeed = 10.0f;
 	float PlayerDownSpeed = 10.0f;
 	int32 PlayerGroundFrame = 20;
 	int32 PlayerMoveFrame = 10;

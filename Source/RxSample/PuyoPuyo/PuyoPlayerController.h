@@ -7,6 +7,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "PuyoConfigActor.h"
 #include "StagePawn.h"
+#include "PuyoMesh.h"
 #include "PuyoPlayerController.generated.h"
 
 /**
@@ -39,6 +40,8 @@ UCLASS(Config=Game)
 class RXSAMPLE_API APuyoPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+protected:
+	APuyoPlayerController();
 public:
 	
 
@@ -54,6 +57,7 @@ private:
 	int32 MovablePuyoColor;
 	int32 GroundFrame;
 
+	APuyoMesh* PuyoMeshActor;
 	AStaticMeshActor* CenterPuyoActor;
 	AStaticMeshActor* MovablePuyoActor;
 	UStaticMesh* PuyoMesh;

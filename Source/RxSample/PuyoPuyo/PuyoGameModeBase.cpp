@@ -31,6 +31,8 @@ void APuyoGameModeBase::BeginPlay()
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, Msg);
 	});
 
+	PuyoMesh = GetWorld()->SpawnActor<APuyoMesh>(APuyoMesh::StaticClass());
+
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	PuyoPlayerController = Cast<APuyoPlayerController>(PlayerController);
 	
@@ -47,7 +49,13 @@ void APuyoGameModeBase::BeginPlay()
 void APuyoGameModeBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	Loop();
+	time += DeltaSeconds;
+	if(time > 0.5f)
+	{
+		Loop();
+		time = 0.0f;
+	}
+	
 }
 
 void APuyoGameModeBase::SubscribeTest()
@@ -68,6 +76,7 @@ void APuyoGameModeBase::InitializeGame(APuyoConfigActor* Config)
 	//ScoreInitalize();
 	mode = "start";
 	frame = 0;
+	time = 0.0f;
 }
 
 void APuyoGameModeBase::Loop()

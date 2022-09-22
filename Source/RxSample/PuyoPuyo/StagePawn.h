@@ -25,8 +25,8 @@ struct FPuyoFallData
 	GENERATED_BODY()
 
 	FPuyoMemoryData PuyoMemoryData;
-	float PosZ;
-	float DstZ;
+	int32 PosZ;
+	int32 DstZ;
 	bool Falling;
 };
 

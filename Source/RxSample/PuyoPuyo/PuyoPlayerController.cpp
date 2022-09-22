@@ -2,10 +2,11 @@
 
 
 #include "PuyoPlayerController.h"
-#include "PuyoMesh.h"
 #include "Kismet/GameplayStatics.h"
 
-
+APuyoPlayerController::APuyoPlayerController()
+{
+}
 
 void APuyoPlayerController::Initialize(APuyoConfigActor* Config)
 {
@@ -26,6 +27,8 @@ void APuyoPlayerController::Initialize(APuyoConfigActor* Config)
 	InputComponent->BindAction("Up", IE_Released, this, &APuyoPlayerController::ReleaseUp);
 
 	StagePawn = Cast<AStagePawn>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+	PuyoMeshActor = Cast<APuyoMesh>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoMesh::StaticClass()));
+
 }
 
 bool APuyoPlayerController::CreateNewPuyo()
@@ -39,7 +42,6 @@ bool APuyoPlayerController::CreateNewPuyo()
 	MovablePuyoColor = FMath::Floor(FMath::FRand() * PuyoColors) + 1;
 
 	//generate new puyo
-	APuyoMesh* PuyoMeshActor = GetWorld()->SpawnActor<APuyoMesh>(APuyoMesh::StaticClass());
 	CenterPuyoActor = PuyoMeshActor->GetPuyo(CenterPuyoColor);
 	MovablePuyoActor = PuyoMeshActor->GetPuyo(MovablePuyoColor);
 
@@ -63,30 +65,30 @@ bool APuyoPlayerController::CreateNewPuyo()
 void APuyoPlayerController::SetPuyoPosition()
 {
 	CenterPuyoActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoStatus.centerY, -PuyoStatus.centerZ));
-	PuyoStatus.y = PuyoStatus.centerY + FMath::Cos(PuyoStatus.rotation * (float)PI / 180.0f) * PuyoConfig->PuyoMeshWidth;
-	PuyoStatus.z = PuyoStatus.centerZ + FMath::Sin(PuyoStatus.rotation * (float)PI / 180.0f) * PuyoConfig->PuyoMeshHeight;
-	MovablePuyoActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoStatus.y, -PuyoStatus.z));
+	int32 y = PuyoStatus.centerY + FMath::Cos(PuyoStatus.rotation * (float)PI / 180.0f) * PuyoConfig->PuyoMeshWidth;
+	int32 z = PuyoStatus.centerZ + FMath::Sin(PuyoStatus.rotation * (float)PI / 180.0f) * PuyoConfig->PuyoMeshHeight;
+	MovablePuyoActor->SetActorLocation(FVector(PuyoConfig->PosX, y, -z));
 }
 
 bool APuyoPlayerController::Falling(bool bDownPressed)
 {
+	
 	//check whether there is a block under current location or not
 	bool bIsBlocked = false;
 	int32 y = PuyoStatus.y;
 	int32 z = PuyoStatus.z;
 	int32 dy = PuyoStatus.dy;
 	int32 dz = PuyoStatus.dz;
-	//check the valid index
-	if(IsValidIndex(StagePawn->Board, y, z + 1) && IsValidIndex(StagePawn->Board, y + dy, z + dz + 1))
-	{
-		if(z + 1 >=PuyoConfig->StageRows || StagePawn->Board[z + 1][y].Puyo || (z + dz + 1 >= 0 && (z + dz + 1 >= PuyoConfig->StageRows || StagePawn->Board[z + dz + 1][y + dy].Puyo)))
-        {
-        	bIsBlocked = true;
-        }
-	}
+	UE_LOG(LogTemp, Log, TEXT("CenterZ: %d"), PuyoStatus.centerZ);
+    UE_LOG(LogTemp, Log, TEXT("Z: %d"), PuyoStatus.z);
+	if(z + 1 >=PuyoConfig->StageRows || IsValidIndex(StagePawn->Board, y, z + 1) || (z + dz + 1 >= 0 && (z + dz + 1 >= PuyoConfig->StageRows || IsValidIndex(StagePawn->Board, y + dy, z + dz + 1))))
+    {
+        bIsBlocked = true;
+    }
 	
 	if(!bIsBlocked)
 	{
+		
 		//if there is no block under, fall puyo. processing of free fall
 		PuyoStatus.centerZ += PuyoConfig->FreeFallingSpeed;
 		if(bDownPressed)
@@ -94,9 +96,10 @@ bool APuyoPlayerController::Falling(bool bDownPressed)
 			//if press down key, fall faster
 			PuyoStatus.centerZ += PuyoConfig->PlayerDownSpeed;
 		}
+		
 		if(FMath::Floor(PuyoStatus.centerZ / PuyoConfig->PuyoMeshHeight) != z)
 		{
-			//puyo goes over the block, check again
+			//puyo goes over one grid, check again
 			//if press down key, add acore
 			if(bDownPressed)
 			{
@@ -104,13 +107,12 @@ bool APuyoPlayerController::Falling(bool bDownPressed)
 			}
 			z += 1;
 			PuyoStatus.z = z;
-			if(IsValidIndex(StagePawn->Board, y, z + 1) && IsValidIndex(StagePawn->Board, y + dy, z + dz + 1))
-			{
-				if(z + 1 >= PuyoConfig->StageRows || StagePawn->Board[z + 1][y].Puyo || (z + dz + 1 >= 0 && (z + dz + 1 >= PuyoConfig->StageRows || StagePawn->Board[z + dz + 1][y + dy].Puyo)))
-                {
-                	bIsBlocked = true;
-                }
-			}
+			
+			if(z + 1 >= PuyoConfig->StageRows || IsValidIndex(StagePawn->Board, y, z + 1) || (z + dz + 1 >= 0 && (z + dz + 1 >= PuyoConfig->StageRows || IsValidIndex(StagePawn->Board, y + dy, z + dz + 1))))
+            {
+                bIsBlocked = true;
+            }
+			
 			
 			if(!bIsBlocked)
 			{
@@ -168,53 +170,43 @@ FString APuyoPlayerController::Playing(int32 frame)
 		//check if the block doesn't exist for the direction
 		//check right and left from own position
 		bool bCanMove = true;
-		if(IsValidIndex(StagePawn->Board, y + cy, z))
-		{
-			if(z < 0 || y + cy < 0 || y + cy >= PuyoConfig->StageCols || StagePawn->Board[z][y + cy].Puyo)
+	
+		if(z < 0 || y + cy < 0 || y + cy >= PuyoConfig->StageCols || IsValidIndex(StagePawn->Board, y + cy, z))
+        {
+            if(z >= 0)
             {
-            	if(z >= 0)
-            	{
-            		bCanMove = false;
-            	}
+            	bCanMove = false;
             }
-		}
+        }
 
-		if(IsValidIndex(StagePawn->Board, my + cy, mz))
+		
+		if(mz < 0 || my + cy < 0 || my + cy >= PuyoConfig->StageCols || IsValidIndex(StagePawn->Board, my + cy, mz))
 		{
-			if(mz < 0 || my + cy < 0 || my + cy >= PuyoConfig->StageCols || StagePawn->Board[mz][my + cy].Puyo)
-            {
-            	if(mz >= 0)
-            	{
-            		bCanMove = false;
-            	}
-            }
+			if(mz >= 0)
+			{
+				bCanMove = false;
+			}
 		}
 		
 		//if puyo doesn't ground, check the block under the puyo
 		if(GroundFrame == 0)
 		{
-			if(IsValidIndex(StagePawn->Board, y + cy, z + 1))
-			{
-				if(z + 1 < 0 || y + cy < 0 || y + cy >= PuyoConfig->StageCols || StagePawn->Board[z + 1][y + cy].Puyo)
+			if(z + 1 < 0 || y + cy < 0 || y + cy >= PuyoConfig->StageCols || IsValidIndex(StagePawn->Board, y + cy, z + 1))
+            {
+                if(z + 1 >= 0)
                 {
-                	if(z + 1 >= 0)
-                	{
-                		bCanMove = false;
-                	}
+                	bCanMove = false;
                 }
-			}
-
+            }
 			
-			if(IsValidIndex(StagePawn->Board, my + cy, mz + 1))
-			{
-				if(mz + 1 < 0 || my + cy < 0 || my + cy >= PuyoConfig->StageCols || StagePawn->Board[mz + 1][my + cy].Puyo)
+			if(mz + 1 < 0 || my + cy < 0 || my + cy >= PuyoConfig->StageCols || IsValidIndex(StagePawn->Board, my + cy, mz + 1))
+            {
+                if(mz + 1 >= 0)
                 {
-                	if(mz + 1 >= 0)
-                	{
-                		bCanMove = false;
-                	}
+                	bCanMove = false;
                 }
-			}
+            }
+			
 
 		}
 
@@ -245,92 +237,85 @@ FString APuyoPlayerController::Playing(int32 frame)
 			//can rotate 100% from right to top, do nothing
 		}else if(rotation == 90)
 		{
-			if(IsValidIndex(StagePawn->Board, y - 1, z + 1))
+		
+			//check first if the block is on the left when rotate from up to left cuz need to move right
+            if(z + 1 < 0 || y - 1 < 0 || y - 1 >= PuyoConfig->StageCols || IsValidIndex(StagePawn->Board, y - 1, z + 1))
 			{
-				//check first if the block is on the left when rotate from up to left cuz need to move right
-                if(z + 1 < 0 || y - 1 < 0 || y - 1 >= PuyoConfig->StageCols || StagePawn->Board[z + 1][y - 1].Puyo)
-                {
-                	if(z + 1 >= 0)
-                	{
-                		//block exists, move to right one block
-                		cy = 1;
-                	}
-                }
+				if(z + 1 >= 0)
+				{
+					bCanRotate = false;
+				}
 			}
+                
+			
 			
 			//check if the block is on the right when move to right cuz can't move
 			if(cy == 1)
 			{
-				if(IsValidIndex(StagePawn->Board, y + 1, z + 1))
-				{
-					if(z + 1 < 0 || y + 1 < 0 || y + 1 >= PuyoConfig->StageCols || StagePawn->Board[z + 1][y + 1].Puyo)
+				
+				if(z + 1 < 0 || y + 1 < 0 || y + 1 >= PuyoConfig->StageCols || IsValidIndex(StagePawn->Board, y + 1, z + 1))
+                {
+                    if(z + 1 >= 0)
                     {
-                    	if(z + 1 >= 0)
-                    	{
-                    		//the block exists, can't rotate
-                    		bCanRotate = false;
-                    	}
+                    	//the block exists, can't rotate
+                    	bCanRotate = false;
                     }
-				}
+                }
+				
 
 			}
 		}else if(rotation == 180)
 		{
-			if(IsValidIndex(StagePawn->Board, y, z + 2))
-			{
-				//When turning from left to bottom, if there is a block under you or to your lower left, pull one up. Check down first.
-                if(z + 2 < 0 || z + 2 >= PuyoConfig->StageRows || StagePawn->Board[z + 2][y].Puyo)
+			
+			//When turning from left to bottom, if there is a block under you or to your lower left, pull one up. Check down first.
+            if(z + 2 < 0 || z + 2 >= PuyoConfig->StageRows || IsValidIndex(StagePawn->Board, y, z + 2))
+            {
+                if(z + 2 >= 0)
                 {
-                	if(z + 2 >= 0)
-                	{
-                		//block exists, pull one up
-                		cz = -1;
-                	}
+                	//block exists, pull one up
+                	cz = -1;
                 }
-			}
-
-			if(IsValidIndex(StagePawn->Board, y - 1, z + 2))
+            }
+			
+			
+			//check left and right
+            if(z + 2 < 0 || z + 2 >= PuyoConfig->StageRows || y - 1 < 0 || IsValidIndex(StagePawn->Board, y - 1, z + 2))
 			{
-				//check left and right
-                if(z + 2 < 0 || z + 2 >= PuyoConfig->StageRows || y - 1 < 0 || StagePawn->Board[z + 2][y - 1].Puyo)
-                {
-                	if(z + 2 >= 0)
-                	{
-                		//block exists, pull one up
-                		cz = -1;
-                	}
-                }
+				if(z + 2 >= 0)
+				{
+					//block exists, pull one up
+					cz = -1;
+				}
 			}
+                
+			
 			
 		}else if(rotation == 270)
 		{
-			if(IsValidIndex(StagePawn->Board, y + 1, z + 1))
-			{
-				//check if the block is on the right when rotate from bottom to right cuz need to move left
-                if(z + 1 < 0 || y + 1 < 0 || y + 1 >= PuyoConfig->StageCols || StagePawn->Board[z + 1][y + 1].Puyo)
+			
+			//check if the block is on the right when rotate from bottom to right cuz need to move left
+            if(z + 1 < 0 || y + 1 < 0 || y + 1 >= PuyoConfig->StageCols || IsValidIndex(StagePawn->Board, y + 1, z + 1))
+            {
+                if(z + 1 >= 0)
                 {
-                	if(z + 1 >= 0)
-                	{
-                		//block exists, move to left one block
-                		cy = -1;
-                	}
+                	//block exists, move to left one block
+                	cy = -1;
                 }
-			}
+            }
+			
 			
 			//check if the block is on the left when move to left cuz can't move
 			if(cy == -1)
 			{
-				if(IsValidIndex(StagePawn->Board, y - 1, z + 1))
-				{
-					if(z + 1 < 0 || y - 1 < 0 || y - 1 >= PuyoConfig->StageCols || StagePawn->Board[z + 1][y - 1].Puyo)
+				
+				if(z + 1 < 0 || y - 1 < 0 || y - 1 >= PuyoConfig->StageCols || IsValidIndex(StagePawn->Board, y - 1, z + 1))
+                {
+                    if(z + 1 >= 0)
                     {
-                    	if(z + 1 >= 0)
-                    	{
-                    		//the block exists, can't rotate
-                    		bCanRotate = false;
-                    	}
+                    	//the block exists, can't rotate
+                    	bCanRotate = false;
                     }
-				}
+                }
 				
 			}
 		}
@@ -372,7 +357,7 @@ bool APuyoPlayerController::Moving(int32 frame)
 	//make puyo fall during moving
 	Falling(KeyStatus.Down);
 	float ratio = FMath::Min(1, (frame - ActionStartFrame) / float(PuyoConfig->PlayerMoveFrame));
-	PuyoStatus.centerY = FMath::Lerp(MoveDestination, MoveSource, ratio);
+	PuyoStatus.centerY = FMath::Lerp(MoveSource, MoveDestination, ratio);
 	SetPuyoPosition();
 	if(ratio == 1)
 	{
@@ -431,14 +416,22 @@ template <typename TYPE>
 bool APuyoPlayerController::IsValidIndex(TArray<TYPE> Array, int32 y, int32 z)
 {
 	bool bFirstValid = Array.IsValidIndex(z);
+	bool bIsPuyo = false;
 	if(bFirstValid)
 	{
-		return Array[z].IsValidIndex(y);
-	}else
-	{
-		return false;
+		bool bSecondValid = Array[z].IsValidIndex(y);
+		if(bSecondValid)
+		{
+			if(Array[z][y].Puyo)
+			{
+				bIsPuyo = true;
+			}
+		}
 	}
+	return bIsPuyo;
 }
+
+
 
 void APuyoPlayerController::PressLeft()
 {
