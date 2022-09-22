@@ -124,10 +124,7 @@ void AStagePawn::ShowArray()
 //Check freefall
 bool AStagePawn::CheckFall()
 {
-	if(FallingPuyoArray.Num() > 0)
-	{
-		FallingPuyoArray.Empty();
-	}
+	FallingPuyoArray.Empty();
 	bIsFalling = false;
 
 	//check from bottom to top
@@ -192,7 +189,7 @@ bool AStagePawn::Fall()
 		fallingPuyo.PosZ = PosZ;
 		//move puyo
 		PuyoMeshActor = fallingPuyo.PuyoMemoryData.PuyoMeshActor;
-		PuyoMeshActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoConfig->PuyoMeshWidth * fallingPuyo.PosY, PosZ));
+		PuyoMeshActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoMeshActor->GetActorLocation().Y, -PosZ));
 	}
 	return  bIsFalling;
 }

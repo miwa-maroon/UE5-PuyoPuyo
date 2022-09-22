@@ -62,10 +62,10 @@ bool APuyoPlayerController::CreateNewPuyo()
 
 void APuyoPlayerController::SetPuyoPosition()
 {
-	CenterPuyoActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoStatus.centerY, PuyoStatus.centerZ));
+	CenterPuyoActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoStatus.centerY, -PuyoStatus.centerZ));
 	PuyoStatus.y = PuyoStatus.centerY + FMath::Cos(PuyoStatus.rotation * (float)PI / 180.0f) * PuyoConfig->PuyoMeshWidth;
 	PuyoStatus.z = PuyoStatus.centerZ + FMath::Sin(PuyoStatus.rotation * (float)PI / 180.0f) * PuyoConfig->PuyoMeshHeight;
-	MovablePuyoActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoStatus.y, PuyoStatus.z));
+	MovablePuyoActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoStatus.y, -PuyoStatus.z));
 }
 
 bool APuyoPlayerController::Falling(bool bDownPressed)

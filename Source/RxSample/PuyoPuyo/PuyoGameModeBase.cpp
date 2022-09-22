@@ -48,7 +48,6 @@ void APuyoGameModeBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	Loop();
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, mode);
 }
 
 void APuyoGameModeBase::SubscribeTest()
@@ -86,8 +85,8 @@ void APuyoGameModeBase::Loop()
 	}else if (mode == "fall")
 	{
 		if(!StagePawn->Fall()){
-        				mode = "checkErase";
-        			}
+        	mode = "checkErase";
+        }
 	}else if (mode == "checkErase")
 	{
 		TArray<int32> EraseInfo = StagePawn->CheckErase(frame);
@@ -119,11 +118,9 @@ void APuyoGameModeBase::Loop()
 		if(!PuyoPlayerController->CreateNewPuyo())
         {
         	mode = "gameover";
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Game Over");
         }else
         {
         	mode = "playing";
-        	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "playing");
         }
 	}else if(mode == "playing")
 	{
@@ -154,7 +151,8 @@ void APuyoGameModeBase::Loop()
 		// PuyoMesh.Batankyu(frame);
   //       PlayerController.Batankyu();
 	}
-	
+	UE_LOG(LogTemp, Log, TEXT("mode: %s"), *mode);
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, mode);
 	frame++;
 	
 }
