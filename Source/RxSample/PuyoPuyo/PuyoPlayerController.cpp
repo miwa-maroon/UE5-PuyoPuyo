@@ -48,7 +48,7 @@ bool APuyoPlayerController::CreateNewPuyo()
 	//Child to Stage
 	//set initial location of puyo
 	PuyoStatus.y = 2; //location of center puyo second from left
-	PuyoStatus.z = 1; //Comes out just above the top of the screen.
+	PuyoStatus.z = -1; //Comes out just above the top of the screen.
 	PuyoStatus.centerY = 2 * PuyoConfig->PuyoMeshWidth;
 	PuyoStatus.centerZ = -1 * PuyoConfig->PuyoMeshHeight;
 	PuyoStatus.dy = 0; //Relative position of the moving Puyo: the moving puyo is in the upward direction
@@ -66,7 +66,7 @@ void APuyoPlayerController::SetPuyoPosition()
 {
 	CenterPuyoActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoStatus.centerY, -PuyoStatus.centerZ));
 	int32 y = PuyoStatus.centerY + FMath::Cos(PuyoStatus.rotation * (float)PI / 180.0f) * PuyoConfig->PuyoMeshWidth;
-	int32 z = PuyoStatus.centerZ + FMath::Sin(PuyoStatus.rotation * (float)PI / 180.0f) * PuyoConfig->PuyoMeshHeight;
+	int32 z = PuyoStatus.centerZ - FMath::Sin(PuyoStatus.rotation * (float)PI / 180.0f) * PuyoConfig->PuyoMeshHeight;
 	MovablePuyoActor->SetActorLocation(FVector(PuyoConfig->PosX, y, -z));
 }
 
@@ -79,8 +79,7 @@ bool APuyoPlayerController::Falling(bool bDownPressed)
 	int32 z = PuyoStatus.z;
 	int32 dy = PuyoStatus.dy;
 	int32 dz = PuyoStatus.dz;
-	UE_LOG(LogTemp, Log, TEXT("CenterZ: %d"), PuyoStatus.centerZ);
-    UE_LOG(LogTemp, Log, TEXT("Z: %d"), PuyoStatus.z);
+	
 	if(z + 1 >=PuyoConfig->StageRows || IsValidIndex(StagePawn->Board, y, z + 1) || (z + dz + 1 >= 0 && (z + dz + 1 >= PuyoConfig->StageRows || IsValidIndex(StagePawn->Board, y + dy, z + dz + 1))))
     {
         bIsBlocked = true;
@@ -91,12 +90,12 @@ bool APuyoPlayerController::Falling(bool bDownPressed)
 		
 		//if there is no block under, fall puyo. processing of free fall
 		PuyoStatus.centerZ += PuyoConfig->FreeFallingSpeed;
+		
 		if(bDownPressed)
 		{
 			//if press down key, fall faster
 			PuyoStatus.centerZ += PuyoConfig->PlayerDownSpeed;
 		}
-		
 		if(FMath::Floor(PuyoStatus.centerZ / PuyoConfig->PuyoMeshHeight) != z)
 		{
 			//puyo goes over one grid, check again
@@ -145,6 +144,7 @@ bool APuyoPlayerController::Falling(bool bDownPressed)
         	return true;
         }
 	}
+	
 	return false;
 }
 
@@ -165,12 +165,11 @@ FString APuyoPlayerController::Playing(int32 frame)
 		int32 cy = KeyStatus.Right ? 1 : -1;
 		int32 y = PuyoStatus.y;
 		int32 z = PuyoStatus.z;
-		int32 my = PuyoStatus.dy;
-		int32 mz = PuyoStatus.dz;
+		int32 my = y + PuyoStatus.dy;
+		int32 mz = z + PuyoStatus.dz;
 		//check if the block doesn't exist for the direction
 		//check right and left from own position
 		bool bCanMove = true;
-	
 		if(z < 0 || y + cy < 0 || y + cy >= PuyoConfig->StageCols || IsValidIndex(StagePawn->Board, y + cy, z))
         {
             if(z >= 0)
@@ -227,7 +226,7 @@ FString APuyoPlayerController::Playing(int32 frame)
 		int32 z = PuyoStatus.z;
 		int32 my = y + PuyoStatus.dy;
 		int32 mz = z + PuyoStatus.dz;
-		float rotation = PuyoStatus.rotation;
+		int32 rotation = int32(PuyoStatus.rotation);
 		bool bCanRotate = true;
 
 		int32 cy = 0;
@@ -243,7 +242,7 @@ FString APuyoPlayerController::Playing(int32 frame)
 			{
 				if(z + 1 >= 0)
 				{
-					bCanRotate = false;
+					cy = 1;
 				}
 			}
                 
@@ -338,9 +337,10 @@ FString APuyoPlayerController::Playing(int32 frame)
 			RotateBeforeCenterY = y * PuyoConfig->PuyoMeshHeight;
 			RotateAfterCenterY = (y + cy) * PuyoConfig->PuyoMeshHeight;
 			RotateFromRotation = PuyoStatus.rotation;
+
 			//set the next state
 			PuyoStatus.y += cy;
-			int32 DistRotation = (PuyoStatus.rotation + 90) % 360;
+			int32 DistRotation = (int32(PuyoStatus.rotation) + 90) % 360;
 			TArray<TArray<int32>> DRotateArray = { {1, 0}, {0, -1}, {-1, 0}, {0, 1} };
 			TArray<int32> DCombi = DRotateArray[DistRotation / 90];
 			PuyoStatus.dy = DCombi[0];
@@ -355,7 +355,7 @@ FString APuyoPlayerController::Playing(int32 frame)
 bool APuyoPlayerController::Moving(int32 frame)
 {
 	//make puyo fall during moving
-	Falling(KeyStatus.Down);
+	bool bFalling = Falling(KeyStatus.Down);
 	float ratio = FMath::Min(1, (frame - ActionStartFrame) / float(PuyoConfig->PlayerMoveFrame));
 	PuyoStatus.centerY = FMath::Lerp(MoveSource, MoveDestination, ratio);
 	SetPuyoPosition();
@@ -369,14 +369,14 @@ bool APuyoPlayerController::Moving(int32 frame)
 bool APuyoPlayerController::Rotating(int32 frame)
 {
 	//make puyo fall during rotating
-	Falling(KeyStatus.Down);
+	bool bFalling = Falling(KeyStatus.Down);
 	float ratio = FMath::Min(1, (frame - ActionStartFrame) / float(PuyoConfig->PlayerRotateFrame));
 	PuyoStatus.centerY = FMath::Lerp(RotateBeforeCenterY, RotateAfterCenterY, ratio);
-	PuyoStatus.rotation = FMath::Lerp(RotateFromRotation, RotateFromRotation + 90, ratio);
+	PuyoStatus.rotation = FMath::Lerp(RotateFromRotation, RotateFromRotation + 90.0f, ratio);
 	SetPuyoPosition();
 	if(ratio == 1)
 	{
-		PuyoStatus.rotation = (PuyoStatus.rotation + 90) % 360;
+		PuyoStatus.rotation = float((int32(PuyoStatus.rotation)) % 360);
 		return false;
 	}
 	return true;

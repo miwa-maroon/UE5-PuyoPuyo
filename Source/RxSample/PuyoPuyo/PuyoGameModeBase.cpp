@@ -49,12 +49,15 @@ void APuyoGameModeBase::BeginPlay()
 void APuyoGameModeBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	Loop();
+	/*
 	time += DeltaSeconds;
 	if(time > 0.5f)
 	{
 		Loop();
 		time = 0.0f;
 	}
+	*/
 	
 }
 

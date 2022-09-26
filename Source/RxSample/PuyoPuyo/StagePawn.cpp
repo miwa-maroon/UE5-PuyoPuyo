@@ -23,7 +23,7 @@ AStagePawn::AStagePawn()
 	SpringArm->SetupAttachment(RootComponent);
 	Camera->SetupAttachment(SpringArm);
 
-	Camera->SetRelativeLocation(FVector(-800.0f, 0.0f, 0.0f));
+	Camera->SetRelativeLocation(FVector(-1000.0f, 0.0f, 0.0f));
 
 }
 
@@ -86,7 +86,7 @@ void AStagePawn::Initialize(APuyoConfigActor* Config)
 		}
 	}
 	this->PuyoCount = PuyoCount;
-	ShowArray();
+	// ShowArray();
 	
 }
 
@@ -102,7 +102,7 @@ void AStagePawn::SetPuyo(int Puyo, int32 y, int32 z)
 		Board[z][y] = {Puyo, FixedPuyoMeshActor};
 
 	}
-	ShowArray();
+	// ShowArray();
 }
 
 void AStagePawn::ShowArray()
@@ -117,7 +117,7 @@ void AStagePawn::ShowArray()
 		}
 		Array.Add(Line);
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Join(Array, TEXT("\n")));
+	UE_LOG(LogTemp, Log, TEXT("Array is: %s"), *FString::Join(Array, TEXT("\n")));
 	
 }
 
@@ -133,12 +133,12 @@ bool AStagePawn::CheckFall()
 		TArray<FPuyoMemoryData> Line = Board[z];
 		for(int32 y = 0; y < Line.Num(); y++)
 		{
-			if(!Board[z][y].Puyo)
+			if(Board[z][y].Puyo == 0)
 			{
 				//if puyo isnt in this space, go next
 				continue;
 			}
-			if(!Board[z+1][y].Puyo)
+			if(Board[z+1][y].Puyo == 0)
 			{
 				//this puyo is gonna fall, so remove it
 				FPuyoMemoryData cell = Board[z][y];
@@ -165,20 +165,20 @@ bool AStagePawn::CheckFall()
 bool AStagePawn::Fall()
 {
 	bIsFalling = false;
-	for(FPuyoFallData fallingPuyo: FallingPuyoArray)
+	for(int32 i = 0; i < FallingPuyoArray.Num(); i++)
 	{
-		if(!fallingPuyo.Falling)
+		if(!FallingPuyoArray[i].Falling)
 		{
 			//alreday arrived
 			continue;
 		}
-		int32 PosZ = fallingPuyo.PosZ;
-		PosZ += PuyoConfig->FreeFallingSpeed;
-		if(PosZ >= fallingPuyo.DstZ)
+		int32 PosZ = FallingPuyoArray[i].PosZ;
+		PosZ += int32(PuyoConfig->FreeFallingSpeed) * 10;
+		if(PosZ >= FallingPuyoArray[i].DstZ)
 		{
 			//finish falling
-			PosZ = fallingPuyo.DstZ;
-			fallingPuyo.Falling = false;
+			PosZ = FallingPuyoArray[i].DstZ;
+			FallingPuyoArray[i].Falling = false;
 		}
 		else
 		{
@@ -186,9 +186,9 @@ bool AStagePawn::Fall()
 			bIsFalling = true;
 		}
 		//save the new position of z
-		fallingPuyo.PosZ = PosZ;
+		FallingPuyoArray[i].PosZ = PosZ;
 		//move puyo
-		PuyoMeshActor = fallingPuyo.PuyoMemoryData.PuyoMeshActor;
+		PuyoMeshActor = FallingPuyoArray[i].PuyoMemoryData.PuyoMeshActor;
 		PuyoMeshActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoMeshActor->GetActorLocation().Y, -PosZ));
 	}
 	return  bIsFalling;
@@ -211,7 +211,7 @@ TArray<int32> AStagePawn::CheckErase(int32 InStartFrame)
 	{
 		//confirm existing puyo
 		int32 orig = this->Board[z][y].Puyo;
-		if(!orig)
+		if(orig == 0)
 		{
 			//if not exist, do nothing
 			return;
@@ -239,7 +239,7 @@ TArray<int32> AStagePawn::CheckErase(int32 InStartFrame)
 			}
 			//check if i can erase puyos around the puyo
 			CheckSequentialPuyo(dy, dz);
-		};
+		}
 	};
 
 	//do confirm erase puyo
@@ -248,12 +248,12 @@ TArray<int32> AStagePawn::CheckErase(int32 InStartFrame)
 		for(int32 y = 0; y < PuyoConfig->StageCols; y++)
 		{
 			SequencePuyoArray.Empty();
-			int32 PuyoColor = Board[z][y].Puyo && Board[z][y].Puyo;
+			int32 PuyoColor = Board[z][y].Puyo && Board[z][y].Puyo != 0;
 			CheckSequentialPuyo(y, z);
 			if(SequencePuyoArray.Num() == 0 || SequencePuyoArray.Num() < PuyoConfig->ErasePuyoNum)
 			{
 				//if not exist or not enough erase puyo, not erase
-				if(SequencePuyoArray.Num())
+				if(SequencePuyoArray.Num() > 0)
 				{
 					//push avoided puyo to list
 					for(int32 i = 0; i < SequencePuyoArray.Num(); i++)
@@ -278,6 +278,7 @@ TArray<int32> AStagePawn::CheckErase(int32 InStartFrame)
 	for(FPuyoEraseData info : ExistingPuyoArray)
 	{
 		Board[info.Z][info.Y] = info.Cell;
+		
 	}
 
 	if(ErasingPuyoArray.Num())

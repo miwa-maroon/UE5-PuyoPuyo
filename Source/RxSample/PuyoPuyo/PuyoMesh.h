@@ -33,5 +33,5 @@ public:
 	void Batankyu();
 
 private:
-	TArray<FString> m_PuyoColors = {"Puyo_Red", "Puyo_Blue", "Puyo_Green", "Puyo_Yellow", "Puyo_Purple"};
+	TArray<FString> m_PuyoColors = {"Puyo_Purple", "Puyo_Blue", "Puyo_Green", "Puyo_Yellow", "Puyo_Red"};
 };

@@ -80,7 +80,7 @@ private:
 	TArray<FPuyoEraseData> ErasingPuyoArray;
 	
 	
-	void ShowArray();
+	
 	
 
 public:
@@ -95,5 +95,6 @@ public:
 	bool Erasing(int32 frame);
 
 	void SetPuyo(int32 Puyo, int32 y, int32 z);
+	void ShowArray();
 };
 

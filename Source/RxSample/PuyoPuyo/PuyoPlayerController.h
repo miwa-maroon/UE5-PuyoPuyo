@@ -23,7 +23,7 @@ struct FPuyoStatus
 	int32 centerZ;
 	int32 dy;
 	int32 dz;
-	int32 rotation;
+	float rotation;
 };
 
 USTRUCT()

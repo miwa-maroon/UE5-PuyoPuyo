@@ -30,7 +30,7 @@ public:
 	int32 StageCols = 6;
 	int32 StageRows = 12;
 
-	float FreeFallingSpeed = 100.0f;
+	float FreeFallingSpeed = 1.0f;
 	float ErasePuyoNum = 4;
 
 	
@@ -39,12 +39,12 @@ public:
 	int32 PuyoColors = 4;
 	float PlayerFallingSpeed = 10.0f;
 	float PlayerDownSpeed = 10.0f;
-	int32 PlayerGroundFrame = 20;
-	int32 PlayerMoveFrame = 10;
-	int32 PlayerRotateFrame = 10;
+	int32 PlayerGroundFrame = 5;
+	int32 PlayerMoveFrame = 20;
+	int32 PlayerRotateFrame = 20;
 
 	float PosX = 0.0f;
-	float InitY = 0.0f;
-	float InitZ = 100.0f; //PuyoMeshHeight * StageRows * 0.5f + 100.0f
+	float InitY = 248.0f;
+	float InitZ = -480.0f;
 
 };
