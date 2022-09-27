@@ -31,6 +31,20 @@ void APuyoGameModeBase::BeginPlay()
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, Msg);
 	});
 
+	FString Path = "/Game/Widget/WBP_ScoreWidget.WBP_ScoreWidget_C";
+	GameWidgetClass = TSoftClassPtr<UUserWidget>(FSoftObjectPath(*Path)).LoadSynchronous();
+
+	if(GameWidgetClass)
+	{
+		ScoreWidget = CreateWidget<UScoreWidget>(GetWorld(), GameWidgetClass);
+        if(ScoreWidget)
+        {
+        	ScoreWidget->AddToViewport();
+        }
+	}
+	
+	
+
 	PuyoMesh = GetWorld()->SpawnActor<APuyoMesh>(APuyoMesh::StaticClass());
 
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -50,15 +64,6 @@ void APuyoGameModeBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	Loop();
-	/*
-	time += DeltaSeconds;
-	if(time > 0.5f)
-	{
-		Loop();
-		time = 0.0f;
-	}
-	*/
-	
 }
 
 void APuyoGameModeBase::SubscribeTest()
@@ -76,7 +81,7 @@ void APuyoGameModeBase::InitializeGame(APuyoConfigActor* Config)
 {
 	StagePawn->Initialize(Config);
 	PuyoPlayerController->Initialize(Config);
-	//ScoreInitalize();
+	InitializeScore();
 	mode = "start";
 	frame = 0;
 	time = 0.0f;
@@ -106,7 +111,7 @@ void APuyoGameModeBase::Loop()
         {
         	mode = "erasing";
         	combinationCount++;
-        	//ScoreCalculate(combinationCount, eraseInfo.piece, eraseInfo.color);
+        	CalcScore(combinationCount, EraseInfo[0], EraseInfo[1]);
         	//StagePawn.hideZenkeshi();
         }
         else
@@ -114,7 +119,7 @@ void APuyoGameModeBase::Loop()
         	if(StagePawn->PuyoCount == 0 && combinationCount > 0)
         	{
         		//StagePawn.ShowZenkeshi();
-        		//ScoreAddScore(3600);
+        		UpdateScore(3600);
         	}
         	combinationCount = 0;
         	mode = "newPuyo";
@@ -167,6 +172,36 @@ void APuyoGameModeBase::Loop()
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, mode);
 	frame++;
 	
+}
+
+void APuyoGameModeBase::InitializeScore()
+{
+	Score = 0;
+	ShowScoreText();
+}
+
+void APuyoGameModeBase::UpdateScore(int32 InScore)
+{
+	Score += InScore;
+	ShowScoreText();
+}
+
+void APuyoGameModeBase::CalcScore(int32 InRensa, int32 InChain, int32 InColor)
+{
+	InRensa = FMath::Min(InRensa, RensaBonus.Num() - 1);
+	InChain = FMath::Min(InChain, ChainBonus.Num() - 1);
+	InColor = FMath::Min(InColor, ColorBonus.Num() - 1);
+	int32 Scale = RensaBonus[InRensa] * ChainBonus[InChain] * ColorBonus[InColor];
+	if(Scale == 0)
+	{
+		Scale = 1;
+	}
+	UpdateScore(Scale * InChain * 10);
+}
+
+void APuyoGameModeBase::ShowScoreText()
+{
+	ScoreWidget->SetScoreText(Score);
 }
 
 
