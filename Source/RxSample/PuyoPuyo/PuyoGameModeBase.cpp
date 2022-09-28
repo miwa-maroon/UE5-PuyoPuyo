@@ -2,6 +2,8 @@
 
 
 #include "PuyoGameModeBase.h"
+
+
 #include "Kismet/GameplayStatics.h"
 
 
@@ -30,18 +32,24 @@ void APuyoGameModeBase::BeginPlay()
 		const FString Msg("Test!!");
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, Msg);
 	});
-
-	FString Path = "/Game/Widget/WBP_ScoreWidget.WBP_ScoreWidget_C";
-	GameWidgetClass = TSoftClassPtr<UUserWidget>(FSoftObjectPath(*Path)).LoadSynchronous();
-
-	if(GameWidgetClass)
-	{
-		ScoreWidget = CreateWidget<UScoreWidget>(GetWorld(), GameWidgetClass);
-        if(ScoreWidget)
+	FString PathTitleWidget = "/Game/Widget/WBP_TitleWidget.WBP_TitleWidget_C";
+	TitleWidgetClass = TSoftClassPtr<UUserWidget>(FSoftObjectPath(*PathTitleWidget)).LoadSynchronous();
+	if(TitleWidgetClass != nullptr)
+    {
+    	TitleWidget = CreateWidget<UTitleWidget>(GetWorld(), TitleWidgetClass);
+        if(TitleWidget)
         {
-        	ScoreWidget->AddToViewport();
+            TitleWidget->AddToViewport();
         }
+    }
+
+	FString PathScoreWidget = "/Game/Widget/WBP_ScoreWidget.WBP_ScoreWidget_C";
+	ScoreWidgetClass = TSoftClassPtr<UUserWidget>(FSoftObjectPath(*PathScoreWidget)).LoadSynchronous();
+	if(ScoreWidgetClass != nullptr)
+	{
+		ScoreWidget = CreateWidget<UScoreWidget>(GetWorld(), ScoreWidgetClass);
 	}
+	
 	
 	
 
@@ -52,7 +60,7 @@ void APuyoGameModeBase::BeginPlay()
 	
 	StagePawn = Cast<AStagePawn>(PuyoPlayerController->GetPawn());
 
-	APuyoConfigActor* PuyoConfigActor = Cast<APuyoConfigActor>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoConfigActor::StaticClass()));
+	PuyoConfigActor = Cast<APuyoConfigActor>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoConfigActor::StaticClass()));
 	//FString MsgInt = FString::FromInt(PuyoConfigActor->StageRows);
 	//GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, MsgInt);
 	
@@ -64,6 +72,8 @@ void APuyoGameModeBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	Loop();
+	
+	
 }
 
 void APuyoGameModeBase::SubscribeTest()
@@ -81,10 +91,10 @@ void APuyoGameModeBase::InitializeGame(APuyoConfigActor* Config)
 {
 	StagePawn->Initialize(Config);
 	PuyoPlayerController->Initialize(Config);
-	InitializeScore();
-	mode = "start";
+	mode = "lobby";
 	frame = 0;
 	time = 0.0f;
+	TitleWidget->bIsLobby = true;
 }
 
 void APuyoGameModeBase::Loop()
@@ -161,12 +171,33 @@ void APuyoGameModeBase::Loop()
         mode = "checkFall";
 	}else if(mode == "gameover")
 	{
-		// PuyoMesh.PrePareBatankyu(frame);
-  //       mode = "batankyu";
+		ShowGameOverText();
+		mode = "batankyu";
 	}else if(mode == "batankyu")
 	{
 		// PuyoMesh.Batankyu(frame);
   //       PlayerController.Batankyu();
+		mode = "lobby";
+		StagePawn->DestroyAllPuyo();
+		if(ScoreWidget)
+		{
+			ScoreWidget->RemoveFromParent();
+			TitleWidget->AddToViewport();
+			TitleWidget->bIsLobby = true;
+		}
+	}else if(mode == "lobby")
+	{
+		if(!TitleWidget->bIsLobby)
+		{
+			mode = "start";
+			if(ScoreWidget)
+			{
+				ScoreWidget->AddToViewport();
+				InitializeScore();
+				HideGameOverText();
+			}
+		}
+		// PlayerController.Lobby();
 	}
 	UE_LOG(LogTemp, Log, TEXT("mode: %s"), *mode);
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, mode);
@@ -202,6 +233,16 @@ void APuyoGameModeBase::CalcScore(int32 InRensa, int32 InChain, int32 InColor)
 void APuyoGameModeBase::ShowScoreText()
 {
 	ScoreWidget->SetScoreText(Score);
+}
+
+void APuyoGameModeBase::ShowGameOverText()
+{
+	ScoreWidget->SetGameOverText();
+}
+
+void APuyoGameModeBase::HideGameOverText()
+{
+	ScoreWidget->HideGameOverText();
 }
 
 

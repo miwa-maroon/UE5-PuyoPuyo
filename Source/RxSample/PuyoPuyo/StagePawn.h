@@ -93,6 +93,7 @@ public:
 	bool Fall();
 	TArray<int32> CheckErase(int32 InStartFrame);
 	bool Erasing(int32 frame);
+	void DestroyAllPuyo();
 
 	void SetPuyo(int32 Puyo, int32 y, int32 z);
 	void ShowArray();

@@ -9,6 +9,7 @@
 #include "PuyoMesh.h"
 #include "StagePawn.h"
 #include "PuyoPlayerController.h"
+#include "TitleWidget.h"
 #include "ScoreWidget.h"
 #include "PuyoGameModeBase.generated.h"
 
@@ -41,6 +42,7 @@ private:
 	AStagePawn* StagePawn;
 	APuyoPlayerController* PuyoPlayerController;
 	APuyoMesh* PuyoMesh;
+	APuyoConfigActor* PuyoConfigActor;
 	
 
 
@@ -49,6 +51,8 @@ private:
 	void UpdateScore(int32 InScore);
 	void CalcScore(int32 InRensa, int32 InChain, int32 InColor);
 	void ShowScoreText();
+	void ShowGameOverText();
+	void HideGameOverText();
 
 	int32 Score = 0;
 	int combinationCount = 0;
@@ -56,8 +60,12 @@ private:
 	TArray<int32> ChainBonus = {0, 0, 0, 0, 2, 3, 4, 5, 6, 7, 10, 10};
 	TArray<int32> ColorBonus = {0, 0, 3, 6, 12, 24};
 
-    TSubclassOf<class UUserWidget> GameWidgetClass;
+    TSubclassOf<class UUserWidget> TitleWidgetClass;
+	TSubclassOf<class UUserWidget> ScoreWidgetClass;
 
+	UPROPERTY(VisibleInstanceOnly, Category="Runtime")
+	UTitleWidget* TitleWidget;
+	
     UPROPERTY(VisibleInstanceOnly, Category="Runtime")
     UScoreWidget* ScoreWidget;
 };

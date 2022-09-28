@@ -15,15 +15,15 @@ AStagePawn::AStagePawn()
 	//Get stage mesh and spawn it
 	UStaticMesh* SMStageMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Mesh/stage/stage"));
 	StageMesh = CreateDefaultSubobject<UStaticMeshComponent>("stage");
-	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
+	//SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 
 	StageMesh->SetStaticMesh(SMStageMesh);
 	RootComponent = StageMesh;
-	SpringArm->SetupAttachment(RootComponent);
-	Camera->SetupAttachment(SpringArm);
+	// SpringArm->SetupAttachment(RootComponent);
+	Camera->SetupAttachment(RootComponent);
 
-	Camera->SetRelativeLocation(FVector(-1000.0f, 0.0f, 0.0f));
+	Camera->SetRelativeLocation(FVector(-1200.0f, 0.0f, 0.0f));
 
 }
 
@@ -298,6 +298,21 @@ bool AStagePawn::Erasing(int32 frame)
 		PuyoMesh->DestroyPuyo(info.Cell.PuyoMeshActor);
 	}
 	return false;
+}
+
+void AStagePawn::DestroyAllPuyo()
+{
+	for(int32 z = 0; z < PuyoConfig->StageRows; z++)
+	{
+		for(int32 y = 0; y < PuyoConfig->StageCols; y++)
+		{
+			if(Board[z][y].Puyo)
+			{
+				PuyoMesh->DestroyPuyo(Board[z][y].PuyoMeshActor);
+				Board[z][y] = {0, nullptr};
+			}
+		}
+	}
 }
 
 

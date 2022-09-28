@@ -34,7 +34,10 @@ void APuyoPlayerController::Initialize(APuyoConfigActor* Config)
 bool APuyoPlayerController::CreateNewPuyo()
 {
 	//Check if you can put new puyo
-	//write after
+	if(StagePawn->Board[0][2].Puyo != 0)
+	{
+		return false;
+	}
 
 	//set the puyo color
 	int32 PuyoColors = FMath::Max(1, FMath::Min(5, PuyoConfig->PuyoColors));
