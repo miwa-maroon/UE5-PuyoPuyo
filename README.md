@@ -1,8 +1,10 @@
 # UE5-PuyoPuyo
  
 PuyoPuyo(reference)
-chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/http://puyo.sega.jp/program_2020/dl/puyo-programming-code.pdf
+http://puyo.sega.jp/program_2020/dl/puyo-programming-code.pdf
 
 ↓
 
-C++
+C++(This Repo)
+
+Be refactoring along UnrealEngine Gameplay Framework(progress)
