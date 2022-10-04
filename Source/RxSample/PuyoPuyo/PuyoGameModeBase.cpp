@@ -11,9 +11,13 @@ APuyoGameModeBase::APuyoGameModeBase()
 {
 	PlayerControllerClass = APuyoPlayerController::StaticClass();
 	DefaultPawnClass = AStagePawn::StaticClass();
+	PlayerStateClass = APuyoPlayState::StaticClass();
+	HUDClass = APuyoHUD::StaticClass();
 	PrimaryActorTick.bCanEverTick = true;
+	
 }
 
+//dont use
 void APuyoGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -53,7 +57,7 @@ void APuyoGameModeBase::BeginPlay()
 	
 	
 
-	PuyoMesh = GetWorld()->SpawnActor<APuyoMesh>(APuyoMesh::StaticClass());
+	//PuyoMesh = GetWorld()->SpawnActor<APuyoMesh>(APuyoMesh::StaticClass());
 
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	PuyoPlayerController = Cast<APuyoPlayerController>(PlayerController);
@@ -68,12 +72,20 @@ void APuyoGameModeBase::BeginPlay()
 	
 }
 
+//dont use
 void APuyoGameModeBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	Loop();
 	
 	
+}
+
+void APuyoGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+	PuyoMesh = GetWorld()->SpawnActor<APuyoMesh>(APuyoMesh::StaticClass());
+
 }
 
 void APuyoGameModeBase::SubscribeTest()

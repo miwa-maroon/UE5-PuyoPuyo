@@ -17,4 +17,5 @@ class RXSAMPLE_API UTitleWidget : public UUserWidget
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsLobby;
+	
 };

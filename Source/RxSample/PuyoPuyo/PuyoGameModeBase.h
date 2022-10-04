@@ -9,6 +9,8 @@
 #include "PuyoMesh.h"
 #include "StagePawn.h"
 #include "PuyoPlayerController.h"
+#include "PuyoPlayState.h"
+#include "PuyoHUD.h"
 #include "TitleWidget.h"
 #include "ScoreWidget.h"
 #include "PuyoGameModeBase.generated.h"
@@ -29,6 +31,7 @@ protected:
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
 	void SubscribeTest();
 private:

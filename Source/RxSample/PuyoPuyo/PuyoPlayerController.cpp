@@ -8,6 +8,60 @@ APuyoPlayerController::APuyoPlayerController()
 {
 }
 
+void APuyoPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	StagePawn = Cast<AStagePawn>(GetPawn());
+	PuyoConfig = Cast<APuyoConfigActor>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoConfigActor::StaticClass()));
+	PlayerState = Cast<APuyoPlayState>(StagePawn->GetPlayerState());
+	PuyoHUD = Cast<APuyoHUD>(GetHUD());
+
+	KeyStatus = { false, false, false, false };
+	
+	EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+
+	InputComponent->BindAction("Left", IE_Pressed, this, &APuyoPlayerController::PressLeft);
+	InputComponent->BindAction("Left", IE_Released, this, &APuyoPlayerController::ReleaseLeft);
+	InputComponent->BindAction("Right", IE_Pressed, this, &APuyoPlayerController::PressRight);
+	InputComponent->BindAction("Right", IE_Released, this, &APuyoPlayerController::ReleaseRight);
+	InputComponent->BindAction("Down", IE_Pressed, this, &APuyoPlayerController::PressDown);
+	InputComponent->BindAction("Down", IE_Released, this, &APuyoPlayerController::ReleaseDown);
+	InputComponent->BindAction("Up", IE_Pressed, this, &APuyoPlayerController::PressUp);
+	InputComponent->BindAction("Up", IE_Released, this, &APuyoPlayerController::ReleaseUp);
+
+	StagePawn->Initialize(PuyoConfig);
+	PlayerState->SetState(lobby);
+	frame = 0;
+
+	PuyoHUD->ShowTitleWidget();
+}
+
+void APuyoPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+
+	switch (PlayerState->GetState())
+	{
+	case lobby:
+		if(!PuyoHUD->IsTitleWidgetViewport())
+		{
+			PuyoHUD->ShowTitleWidget();
+			PlayerState->SetScore(0);
+		}
+		if(!PuyoHUD->IsInTitle())
+		{
+			PlayerState->SetState(start);
+			if(PuyoHUD->IsTitleWidgetViewport())
+			{
+				PuyoHUD->HideTitleWidget();
+				PuyoHUD->HideGameOverText();
+				PlayerState->SetScore(0);
+			}
+		}
+	}
+}
+
+//dont use
 void APuyoPlayerController::Initialize(APuyoConfigActor* Config)
 {
 	PuyoConfig = Config;

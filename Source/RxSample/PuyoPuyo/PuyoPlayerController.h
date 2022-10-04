@@ -6,8 +6,10 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/StaticMeshActor.h"
 #include "PuyoConfigActor.h"
+#include "PuyoHUD.h"
 #include "StagePawn.h"
 #include "PuyoMesh.h"
+#include "PuyoPlayState.h"
 #include "PuyoPlayerController.generated.h"
 
 /**
@@ -43,7 +45,8 @@ class RXSAMPLE_API APuyoPlayerController : public APlayerController
 protected:
 	APuyoPlayerController();
 public:
-	
+	virtual void BeginPlay() override;
+	virtual void PlayerTick(float DeltaTime) override;
 
 private:
 	
@@ -51,6 +54,10 @@ private:
 	FKeyStatus KeyStatus;
 	APuyoConfigActor* PuyoConfig;
 	AStagePawn* StagePawn;
+	APuyoPlayState* PlayerState;
+	APuyoHUD* PuyoHUD;
+
+	int32 frame;
 	
 	//int32 PuyoColors;
 	int32 CenterPuyoColor;
