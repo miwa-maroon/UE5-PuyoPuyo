@@ -18,15 +18,7 @@ public:
 	// Sets default values for this actor's properties
 	APuyoMesh();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	void Initialize();
 	AStaticMeshActor* GetPuyo(int32 index);
 	void DestroyPuyo(AStaticMeshActor* puyo);
 	void PrepareBatankyu();

@@ -6,11 +6,11 @@
 #include "Kismet/GameplayStatics.h"
 
 
-// Sets default values
+// Set default values
 AStagePawn::AStagePawn()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	
 	//Get stage mesh and spawn it
 	UStaticMesh* SMStageMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Mesh/stage/stage"));
@@ -27,19 +27,6 @@ AStagePawn::AStagePawn()
 
 }
 
-// Called when the game starts or when spawned
-void AStagePawn::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void AStagePawn::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
 
 // Called to bind functionality to input
 void AStagePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
