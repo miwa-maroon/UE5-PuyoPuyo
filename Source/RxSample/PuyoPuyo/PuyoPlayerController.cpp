@@ -11,11 +11,16 @@ APuyoPlayerController::APuyoPlayerController()
 void APuyoPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//Get Actors
 	StagePawn = Cast<AStagePawn>(GetPawn());
 	PuyoConfig = Cast<APuyoConfigActor>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoConfigActor::StaticClass()));
+	PuyoMeshActor = Cast<APuyoMesh>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoMesh::StaticClass()));
 	PlayerState = Cast<APuyoPlayState>(StagePawn->GetPlayerState());
 	PuyoHUD = Cast<APuyoHUD>(GetHUD());
 
+	
+	//initialize this class
 	KeyStatus = { false, false, false, false };
 	
 	EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
@@ -29,60 +34,144 @@ void APuyoPlayerController::BeginPlay()
 	InputComponent->BindAction("Up", IE_Pressed, this, &APuyoPlayerController::PressUp);
 	InputComponent->BindAction("Up", IE_Released, this, &APuyoPlayerController::ReleaseUp);
 
-	StagePawn->Initialize(PuyoConfig);
-	PlayerState->SetState(lobby);
 	frame = 0;
 
+	
+	//initialize StagePawn
+	StagePawn->Initialize(PuyoConfig);
+
+	
+	//initialize PlayerState
+	PlayerState->SetState(lobby);
+	PlayerState->SetCombo(0);
+	PlayerState->SetScore(0);
+
+	
+	//initialize PuyoHUD
 	PuyoHUD->ShowTitleWidget();
 }
 
 void APuyoPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
-
+	
 	switch (PlayerState->GetState())
 	{
 	case lobby:
 		if(!PuyoHUD->IsTitleWidgetViewport())
 		{
 			PuyoHUD->ShowTitleWidget();
-			PlayerState->SetScore(0);
 		}
-		if(!PuyoHUD->IsInTitle())
+		if(!PuyoHUD->GetIsLobby())
 		{
 			PlayerState->SetState(start);
 			if(PuyoHUD->IsTitleWidgetViewport())
 			{
 				PuyoHUD->HideTitleWidget();
+				PuyoHUD->ShowScoreWidget();
+				
 				PuyoHUD->HideGameOverText();
 				PlayerState->SetScore(0);
+				PuyoHUD->ShowScoreText(PlayerState->GetScore());
 			}
 		}
+		break;
+		
+	case start:
+		PlayerState->SetState(checkFall);
+		break;
+		
+	case checkFall:
+		if(StagePawn->CheckFall())
+		{
+			PlayerState->SetState(fall);
+		}else
+		{
+			PlayerState->SetState(checkErase);
+		}
+		break;
+		
+	case fall:
+		if(!StagePawn->Fall())
+		{
+			PlayerState->SetState(checkErase);
+		}
+		break;
+		
+	case checkErase:
+		//EraseInfo = {ErasingPuyoArray.Num(), ErasedPuyoColorMap.Num()}
+		//if there is no puyo to erase, EraseInfo = {0}
+		EraseInfo = StagePawn->CheckErase(frame);
+		if(EraseInfo[0])
+		{
+			PlayerState->SetState(erase);
+			PlayerState->IncrementCombo();
+			PlayerState->CalcScore(PlayerState->GetCombo(), EraseInfo[0], EraseInfo[1]);
+			PuyoHUD->ShowScoreText(PlayerState->GetScore());
+		}else
+		{
+			if(StagePawn->PuyoCount == 0 && PlayerState->GetCombo() > 0)
+			{
+				PlayerState->UpdateScore(3600);
+				PuyoHUD->ShowScoreText(PlayerState->GetScore());
+			}
+			PlayerState->SetCombo(0);
+			PlayerState->SetState(newPuyo);
+		}
+		break;
+		
+	case erase:
+		if(!StagePawn->Erasing(frame))
+		{
+			PlayerState->SetState(checkFall);
+		}
+		break;
+		
+	case newPuyo:
+		if(!CreateNewPuyo())
+		{
+			PlayerState->SetState(gameOver);
+		}else
+		{
+			PlayerState->SetState(playing);
+		}
+		break;
+		
+	case playing:
+		action = Playing(frame);
+		PlayerState->SetState(action);
+		break;
+		
+	case moving:
+		if(!Moving(frame))
+		{
+			PlayerState->SetState(playing);
+		}
+		break;
+
+	case rotating:
+		if(!Rotating(frame))
+		{
+			PlayerState->SetState(playing);
+		}
+		break;
+		
+	case fix:
+		Fix();
+		PlayerState->SetState(checkFall);
+		break;
+		
+	case gameOver:
+		PuyoHUD->ShowGameOverText();
+		StagePawn->DestroyAllPuyo();
+		if(PuyoHUD->IsScoreWidgetViewport())
+		{
+			PuyoHUD->HideScoreWidget();
+			PuyoHUD->ShowTitleWidget();
+		}
+		break;
 	}
-}
-
-//dont use
-void APuyoPlayerController::Initialize(APuyoConfigActor* Config)
-{
-	PuyoConfig = Config;
-	
-	//check keyboard inputs
-	KeyStatus = { false, false, false, false };
-	
-	EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-
-	InputComponent->BindAction("Left", IE_Pressed, this, &APuyoPlayerController::PressLeft);
-	InputComponent->BindAction("Left", IE_Released, this, &APuyoPlayerController::ReleaseLeft);
-	InputComponent->BindAction("Right", IE_Pressed, this, &APuyoPlayerController::PressRight);
-	InputComponent->BindAction("Right", IE_Released, this, &APuyoPlayerController::ReleaseRight);
-	InputComponent->BindAction("Down", IE_Pressed, this, &APuyoPlayerController::PressDown);
-	InputComponent->BindAction("Down", IE_Released, this, &APuyoPlayerController::ReleaseDown);
-	InputComponent->BindAction("Up", IE_Pressed, this, &APuyoPlayerController::PressUp);
-	InputComponent->BindAction("Up", IE_Released, this, &APuyoPlayerController::ReleaseUp);
-
-	StagePawn = Cast<AStagePawn>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
-	PuyoMeshActor = Cast<APuyoMesh>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoMesh::StaticClass()));
-
+	frame++;
 }
 
 bool APuyoPlayerController::CreateNewPuyo()
@@ -102,7 +191,7 @@ bool APuyoPlayerController::CreateNewPuyo()
 	CenterPuyoActor = PuyoMeshActor->GetPuyo(CenterPuyoColor);
 	MovablePuyoActor = PuyoMeshActor->GetPuyo(MovablePuyoColor);
 
-	//Child to Stage
+	//Be child to Stage
 	//set initial location of puyo
 	PuyoStatus.y = 2; //location of center puyo second from left
 	PuyoStatus.z = -1; //Comes out just above the top of the screen.
@@ -205,7 +294,7 @@ bool APuyoPlayerController::Falling(bool bDownPressed)
 	return false;
 }
 
-FString APuyoPlayerController::Playing(int32 frame)
+EStateEnum APuyoPlayerController::Playing(int32 InFrame)
 {
 	//check free fall
 	//if pressed down key, fall faster
@@ -213,7 +302,7 @@ FString APuyoPlayerController::Playing(int32 frame)
 	{
 		//if finished free fall, fix puyo
 		SetPuyoPosition();
-		return "fix";
+		return fix;
 	}
 	SetPuyoPosition();
 	if(KeyStatus.Right || KeyStatus.Left)
@@ -269,11 +358,11 @@ FString APuyoPlayerController::Playing(int32 frame)
 		if(bCanMove)
 		{
 			//set moving info and turn to moving state
-			ActionStartFrame = frame;
+			ActionStartFrame = InFrame;
 			MoveSource = y * PuyoConfig->PuyoMeshWidth;
 			MoveDestination = (y + cy) * PuyoConfig->PuyoMeshWidth;
 			PuyoStatus.y += cy;
-			return "moving";
+			return moving;
 		}
 	}else if(KeyStatus.Up)
 	{
@@ -390,7 +479,7 @@ FString APuyoPlayerController::Playing(int32 frame)
 				PuyoStatus.centerZ = PuyoStatus.z * PuyoConfig->PuyoMeshHeight;
 			}
 			//set moving info and turn to moving state
-			ActionStartFrame = frame;
+			ActionStartFrame = InFrame;
 			RotateBeforeCenterY = y * PuyoConfig->PuyoMeshHeight;
 			RotateAfterCenterY = (y + cy) * PuyoConfig->PuyoMeshHeight;
 			RotateFromRotation = PuyoStatus.rotation;
@@ -402,18 +491,18 @@ FString APuyoPlayerController::Playing(int32 frame)
 			TArray<int32> DCombi = DRotateArray[DistRotation / 90];
 			PuyoStatus.dy = DCombi[0];
 			PuyoStatus.dz = DCombi[1];
-			return "rotating";
+			return rotating;
 		}
 	}
-	return "playing";
+	return playing;
 }
 
 
-bool APuyoPlayerController::Moving(int32 frame)
+bool APuyoPlayerController::Moving(int32 InFrame)
 {
 	//make puyo fall during moving
 	bool bFalling = Falling(KeyStatus.Down);
-	float ratio = FMath::Min(1, (frame - ActionStartFrame) / float(PuyoConfig->PlayerMoveFrame));
+	float ratio = FMath::Min(1, (InFrame - ActionStartFrame) / float(PuyoConfig->PlayerMoveFrame));
 	PuyoStatus.centerY = FMath::Lerp(MoveSource, MoveDestination, ratio);
 	SetPuyoPosition();
 	if(ratio == 1)
@@ -423,11 +512,11 @@ bool APuyoPlayerController::Moving(int32 frame)
 	return true;
 }
 
-bool APuyoPlayerController::Rotating(int32 frame)
+bool APuyoPlayerController::Rotating(int32 InFrame)
 {
 	//make puyo fall during rotating
 	bool bFalling = Falling(KeyStatus.Down);
-	float ratio = FMath::Min(1, (frame - ActionStartFrame) / float(PuyoConfig->PlayerRotateFrame));
+	float ratio = FMath::Min(1, (InFrame - ActionStartFrame) / float(PuyoConfig->PlayerRotateFrame));
 	PuyoStatus.centerY = FMath::Lerp(RotateBeforeCenterY, RotateAfterCenterY, ratio);
 	PuyoStatus.rotation = FMath::Lerp(RotateFromRotation, RotateFromRotation + 90.0f, ratio);
 	SetPuyoPosition();

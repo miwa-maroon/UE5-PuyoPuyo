@@ -71,11 +71,7 @@ bool APuyoHUD::IsScoreWidgetViewport()
 	return ScoreWidget->IsInViewport();
 }
 
-bool APuyoHUD::IsInTitle()
+bool APuyoHUD::GetIsLobby()
 {
-	if(TitleWidget->IsInViewport())
-	{
-		return TitleWidget->bIsLobby;
-	}
-	
+	return TitleWidget->bIsLobby;
 }

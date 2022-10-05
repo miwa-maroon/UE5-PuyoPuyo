@@ -45,5 +45,5 @@ public:
 	bool IsTitleWidgetViewport();
 	bool IsScoreWidgetViewport();
 
-	bool IsInTitle();
+	bool GetIsLobby();
 };

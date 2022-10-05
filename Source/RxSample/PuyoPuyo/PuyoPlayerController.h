@@ -52,14 +52,16 @@ private:
 	
 	FPuyoStatus PuyoStatus;
 	FKeyStatus KeyStatus;
+	
 	APuyoConfigActor* PuyoConfig;
 	AStagePawn* StagePawn;
 	APuyoPlayState* PlayerState;
 	APuyoHUD* PuyoHUD;
 
 	int32 frame;
+	EStateEnum action;
+	TArray<int32> EraseInfo;
 	
-	//int32 PuyoColors;
 	int32 CenterPuyoColor;
 	int32 MovablePuyoColor;
 	int32 GroundFrame;
@@ -90,15 +92,12 @@ private:
 	void ReleaseUp();
 
 public:
-	void Initialize(APuyoConfigActor* PuyoConfig);
-    
-	UFUNCTION()
 	bool CreateNewPuyo();
 	void SetPuyoPosition();
     bool Falling(bool bDownPressed);
-    FString Playing(int32 frame);
-    bool Moving(int32 frame);
-    bool Rotating(int32 frame);
+    EStateEnum Playing(int32 InFrame);
+    bool Moving(int32 InFrame);
+    bool Rotating(int32 InFrame);
     void Fix();
     void Batankyu();
 };

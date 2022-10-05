@@ -42,6 +42,7 @@ public:
 	float PlayerFallingSpeed = 10.0f;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Puyo")
 	float PlayerDownSpeed = 10.0f;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Puyo")
 	int32 PlayerGroundFrame = 5;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Puyo")
 	int32 PlayerMoveFrame = 20;

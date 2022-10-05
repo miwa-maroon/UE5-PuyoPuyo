@@ -22,7 +22,7 @@ enum EStateEnum
 	moving,
 	rotating,
 	fix,
-	gameover,
+	gameOver,
 	lobby
 };
 
@@ -51,7 +51,7 @@ public:
 	void CalcScore(int32 InRensa, int32 InChain, int32 InColor);
 	void SetCombo(int32 InCombo);
 	int32 GetCombo();
-	void UpdateCombo(int32 InCombo);
+	void IncrementCombo();
 };
 
 

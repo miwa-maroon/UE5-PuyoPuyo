@@ -51,7 +51,7 @@ int32 APuyoPlayState::GetCombo()
 	return playerCombo;
 }
 
-void APuyoPlayState::UpdateCombo(int32 InCombo)
+void APuyoPlayState::IncrementCombo()
 {
-	playerCombo += InCombo;
+	playerCombo++;
 }
