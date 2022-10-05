@@ -7,6 +7,7 @@ This repo is PuyoPuyo(popular Japanese game) in UE5 c++ project
 
 # Get Started
 1.Download this repo 
+
 2.launch uproject file
 
 # Features
@@ -19,9 +20,13 @@ This repo is PuyoPuyo(popular Japanese game) in UE5 c++ project
 
 # How to Play
 NumPad 4 -> move left
+
 NumPad 6 -> move right
+
 NumPad 8 -> rotate
+
 NumPad 2 -> move down
+
 
 # C++ Code
 ### Folder
