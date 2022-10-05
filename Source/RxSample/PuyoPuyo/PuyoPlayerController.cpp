@@ -169,6 +169,7 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 			PuyoHUD->HideScoreWidget();
 			PuyoHUD->ShowTitleWidget();
 		}
+		PlayerState->SetState(lobby);
 		break;
 	}
 	frame++;
