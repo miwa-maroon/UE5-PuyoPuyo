@@ -2,6 +2,7 @@
 
 
 #include "PuyoPlayerController.h"
+
 #include "Kismet/GameplayStatics.h"
 
 APuyoPlayerController::APuyoPlayerController()
@@ -18,7 +19,7 @@ void APuyoPlayerController::BeginPlay()
 	PuyoMeshActor = Cast<APuyoMesh>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoMesh::StaticClass()));
 	PlayerState = Cast<APuyoPlayState>(StagePawn->GetPlayerState());
 	PuyoHUD = Cast<APuyoHUD>(GetHUD());
-
+	CameraSwitchingActor = Cast<ACameraSwitchingActor>(UGameplayStatics::GetActorOfClass(GetWorld(), ACameraSwitchingActor::StaticClass()));
 	
 	//initialize this class
 	KeyStatus = { false, false, false, false };
@@ -49,8 +50,12 @@ void APuyoPlayerController::BeginPlay()
 	
 	//initialize PuyoHUD
 	PuyoHUD->ShowTitleWidget();
+
+	//initialize CameraSwitchingActor
+	CameraSwitchingActor->SwitchTitleCamera();
 }
 
+//main function
 void APuyoPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
@@ -62,9 +67,13 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 		{
 			PuyoHUD->ShowTitleWidget();
 		}
+		
+		//OnPress Start Button
+		//bIsLobby = true
 		if(!PuyoHUD->GetIsLobby())
 		{
 			PlayerState->SetState(start);
+			CameraSwitchingActor->SwitchPlayCamera();
 			if(PuyoHUD->IsTitleWidgetViewport())
 			{
 				PuyoHUD->HideTitleWidget();
@@ -170,6 +179,7 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 			PuyoHUD->ShowTitleWidget();
 		}
 		PlayerState->SetState(lobby);
+		CameraSwitchingActor->SwitchTitleCamera();
 		break;
 	}
 	frame++;

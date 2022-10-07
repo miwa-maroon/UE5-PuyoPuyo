@@ -10,6 +10,7 @@
 #include "StagePawn.h"
 #include "PuyoMesh.h"
 #include "PuyoPlayState.h"
+#include "CameraSwitchingActor.h"
 #include "PuyoPlayerController.generated.h"
 
 /**
@@ -57,6 +58,7 @@ private:
 	AStagePawn* StagePawn;
 	APuyoPlayState* PlayerState;
 	APuyoHUD* PuyoHUD;
+	ACameraSwitchingActor* CameraSwitchingActor;
 
 	int32 frame;
 	EStateEnum action;

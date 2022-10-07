@@ -59,10 +59,11 @@ public:
 private:
 	bool bIsFalling;
 	int32 EraseStartFrame;
+	
 
 	UStaticMeshComponent* StageMesh;
-	UCameraComponent* Camera;
-	USpringArmComponent* SpringArm;
+	//UCameraComponent* Camera;
+	//USpringArmComponent* SpringArm;
 	
 	APuyoConfigActor* PuyoConfig;
 
@@ -91,5 +92,6 @@ public:
 
 	void SetPuyo(int32 Puyo, int32 y, int32 z);
 	void ShowArray();
+	
 };
 

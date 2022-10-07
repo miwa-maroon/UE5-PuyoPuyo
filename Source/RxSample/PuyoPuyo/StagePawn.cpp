@@ -16,15 +16,15 @@ AStagePawn::AStagePawn()
 	UStaticMesh* SMStageMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Mesh/stage/stage"));
 	StageMesh = CreateDefaultSubobject<UStaticMeshComponent>("stage");
 	//SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
-	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
+	//Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 
 	StageMesh->SetStaticMesh(SMStageMesh);
 	RootComponent = StageMesh;
 	// SpringArm->SetupAttachment(RootComponent);
-	Camera->SetupAttachment(RootComponent);
+	//Camera->SetupAttachment(RootComponent);
 
-	Camera->SetRelativeLocation(FVector(-1200.0f, 0.0f, 0.0f));
-
+	//Camera->SetWorldLocation(TitleCameraPos);
+	//Camera->SetWorldRotation(TitleCameraRot);
 }
 
 
