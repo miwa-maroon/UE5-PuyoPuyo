@@ -9,6 +9,8 @@
 /**
  * 
  */
+
+
 UCLASS()
 class RXSAMPLE_API UScoreWidget : public UUserWidget
 {
@@ -23,5 +25,28 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void HideGameOverText();
-	
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void TurnOnLeftColor();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void TurnOnRightColor();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void TurnOnUpColor();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void TurnOnDownColor();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void TurnOffLeftColor();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void TurnOffRightColor();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void TurnOffUpColor();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void TurnOffDownColor();
 };

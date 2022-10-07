@@ -30,6 +30,10 @@
 				"Mac",
 				"Linux"
 			]
+		},
+		{
+			"Name": "Text3D",
+			"Enabled": true
 		}
 	]
 }

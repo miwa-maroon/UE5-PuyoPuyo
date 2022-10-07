@@ -11,6 +11,7 @@
 #include "PuyoMesh.h"
 #include "PuyoPlayState.h"
 #include "CameraSwitchingActor.h"
+#include "ScoreTextThreeDActor.h"
 #include "PuyoPlayerController.generated.h"
 
 /**
@@ -59,6 +60,7 @@ private:
 	APuyoPlayState* PlayerState;
 	APuyoHUD* PuyoHUD;
 	ACameraSwitchingActor* CameraSwitchingActor;
+	AScoreTextThreeDActor* ScoreTextThreeDActor;
 
 	int32 frame;
 	EStateEnum action;
@@ -82,7 +84,7 @@ private:
 
 	template <typename TYPE>
 	bool IsValidIndex(TArray<TYPE> Array, int32 y, int32 z);
-
+	
 	void PressLeft();
 	void PressRight();
 	void PressDown();

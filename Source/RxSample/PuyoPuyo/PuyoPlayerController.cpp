@@ -20,6 +20,7 @@ void APuyoPlayerController::BeginPlay()
 	PlayerState = Cast<APuyoPlayState>(StagePawn->GetPlayerState());
 	PuyoHUD = Cast<APuyoHUD>(GetHUD());
 	CameraSwitchingActor = Cast<ACameraSwitchingActor>(UGameplayStatics::GetActorOfClass(GetWorld(), ACameraSwitchingActor::StaticClass()));
+	ScoreTextThreeDActor = Cast<AScoreTextThreeDActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AScoreTextThreeDActor::StaticClass()));
 	
 	//initialize this class
 	KeyStatus = { false, false, false, false };
@@ -53,6 +54,9 @@ void APuyoPlayerController::BeginPlay()
 
 	//initialize CameraSwitchingActor
 	CameraSwitchingActor->SwitchTitleCamera();
+
+	//initialize ScoreTextThreeDActor
+	ScoreTextThreeDActor->ShowScoreText(PlayerState->GetScore());
 }
 
 //main function
@@ -81,7 +85,7 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 				
 				PuyoHUD->HideGameOverText();
 				PlayerState->SetScore(0);
-				PuyoHUD->ShowScoreText(PlayerState->GetScore());
+				ScoreTextThreeDActor->ShowScoreText(PlayerState->GetScore());
 			}
 		}
 		break;
@@ -116,13 +120,13 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 			PlayerState->SetState(erase);
 			PlayerState->IncrementCombo();
 			PlayerState->CalcScore(PlayerState->GetCombo(), EraseInfo[0], EraseInfo[1]);
-			PuyoHUD->ShowScoreText(PlayerState->GetScore());
+			ScoreTextThreeDActor->ShowScoreText(PlayerState->GetScore());
 		}else
 		{
 			if(StagePawn->PuyoCount == 0 && PlayerState->GetCombo() > 0)
 			{
 				PlayerState->UpdateScore(3600);
-				PuyoHUD->ShowScoreText(PlayerState->GetScore());
+				ScoreTextThreeDActor->ShowScoreText(PlayerState->GetScore());
 			}
 			PlayerState->SetCombo(0);
 			PlayerState->SetState(newPuyo);
@@ -593,39 +597,71 @@ bool APuyoPlayerController::IsValidIndex(TArray<TYPE> Array, int32 y, int32 z)
 void APuyoPlayerController::PressLeft()
 {
 	KeyStatus.Left = true;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOnLeftColor();
+	}
 }
 
 void APuyoPlayerController::PressRight()
 {
 	KeyStatus.Right = true;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOnRightColor();
+	}
 }
 
 void APuyoPlayerController::PressDown()
 {
 	KeyStatus.Down = true;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOnDownColor();
+	}
 }
 
 void APuyoPlayerController::PressUp()
 {
 	KeyStatus.Up = true;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOnUpColor();
+	}
 }
 
 void APuyoPlayerController::ReleaseLeft()
 {
 	KeyStatus.Left = false;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOffLeftColor();
+	}
 }
 
 void APuyoPlayerController::ReleaseRight()
 {
 	KeyStatus.Right = false;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOffRightColor();
+	}
 }
 
 void APuyoPlayerController::ReleaseDown()
 {
 	KeyStatus.Down = false;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOffDownColor();
+	}
 }
 
 void APuyoPlayerController::ReleaseUp()
 {
 	KeyStatus.Up = false;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOffUpColor();
+	}
 }
