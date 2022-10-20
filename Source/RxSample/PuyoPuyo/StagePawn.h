@@ -8,6 +8,8 @@
 #include "Engine/StaticMeshActor.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "PuyoMesh.h"
+#include "MorphPuyoMesh.h"
+#include "MorphPuyoActor.h"
 #include "Camera/CameraComponent.h"
 #include "StagePawn.generated.h"
 
@@ -16,7 +18,7 @@ struct FPuyoMemoryData
 {
 	GENERATED_BODY()
 	int32 Puyo;
-	AStaticMeshActor* PuyoMeshActor;
+	AMorphPuyoActor* PuyoMeshActor;
 };
 
 USTRUCT()
@@ -56,24 +58,30 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-private:
+protected:
+	
 	bool bIsFalling;
 	int32 EraseStartFrame;
+	
 
 	UStaticMeshComponent* StageMesh;
-	UCameraComponent* Camera;
-	USpringArmComponent* SpringArm;
+	//UCameraComponent* Camera;
+	//USpringArmComponent* SpringArm;
 	
 	APuyoConfigActor* PuyoConfig;
 
-	AStaticMeshActor* PuyoMeshActor;
-	APuyoMesh* PuyoMesh;
+	AMorphPuyoActor* PuyoMeshActor;
+	AActor* PuyoMeshClass;
+
 
 	
 	TArray<FPuyoFallData> FallingPuyoArray;
 	TArray<FPuyoEraseData> ErasingPuyoArray;
 	
-	
+	TArray<FPuyoMemoryData> ZeroArray;
+	TArray<FPuyoMemoryData> Line;
+	FPuyoMemoryData Puyo;
+	FPuyoMemoryData cell;
 	
 	
 
@@ -81,15 +89,21 @@ public:
 	int32 PuyoCount;
 
 	TArray<TArray<FPuyoMemoryData>> Board;
+	AMorphPuyoMesh* MorphPuyoMesh;
 	
-	void Initialize(APuyoConfigActor* Config);
+	virtual void Initialize(APuyoConfigActor* Config);
 	bool CheckFall();
+	void CheckAndMorphPuyo(int32 y, int32 z);
 	bool Fall();
 	TArray<int32> CheckErase(int32 InStartFrame);
 	bool Erasing(int32 frame);
 	void DestroyAllPuyo();
 
-	void SetPuyo(int32 Puyo, int32 y, int32 z);
-	void ShowArray();
+	virtual void SetPuyo(int32 PuyoCol, int32 y, int32 z);
+	virtual void ShowArray();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void SpawnPuyoMesh();
+	
 };
 

@@ -19,7 +19,7 @@ public:
 	APuyoMesh();
 
 public:	
-	AStaticMeshActor* GetPuyo(int32 index);
+	virtual AStaticMeshActor* GetPuyo(int32 index);
 	void DestroyPuyo(AStaticMeshActor* puyo);
 	void PrepareBatankyu();
 	void Batankyu();

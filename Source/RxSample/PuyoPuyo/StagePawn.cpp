@@ -2,7 +2,6 @@
 
 
 #include "StagePawn.h"
-
 #include "Kismet/GameplayStatics.h"
 
 
@@ -13,18 +12,18 @@ AStagePawn::AStagePawn()
 	PrimaryActorTick.bCanEverTick = false;
 	
 	//Get stage mesh and spawn it
-	UStaticMesh* SMStageMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Mesh/stage/stage"));
-	StageMesh = CreateDefaultSubobject<UStaticMeshComponent>("stage");
+	//UStaticMesh* SMStageMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Mesh/stage/stage"));
+	//StageMesh = CreateDefaultSubobject<UStaticMeshComponent>("stage");
 	//SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
-	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
+	//Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 
-	StageMesh->SetStaticMesh(SMStageMesh);
-	RootComponent = StageMesh;
+	//StageMesh->SetStaticMesh(SMStageMesh);
+	//RootComponent = StageMesh;
 	// SpringArm->SetupAttachment(RootComponent);
-	Camera->SetupAttachment(RootComponent);
+	//Camera->SetupAttachment(RootComponent);
 
-	Camera->SetRelativeLocation(FVector(-1200.0f, 0.0f, 0.0f));
-
+	//Camera->SetWorldLocation(TitleCameraPos);
+	//Camera->SetWorldRotation(TitleCameraRot);
 }
 
 
@@ -39,15 +38,16 @@ void AStagePawn::Initialize(APuyoConfigActor* Config)
 {
 	PuyoConfig = Config;
 
-	RootComponent->SetWorldLocation(FVector(PuyoConfig->PosX, PuyoConfig->InitY, PuyoConfig->InitZ));
-	RootComponent->SetWorldRotation(FRotator(0, 0, 0));
-	RootComponent->SetWorldScale3D(FVector(1.0, PuyoConfig-> StageCols, PuyoConfig->StageRows));
+	SpawnPuyoMesh();
+
+	//RootComponent->SetWorldLocation(FVector(PuyoConfig->PosX, PuyoConfig->InitY, PuyoConfig->InitZ));
+	//RootComponent->SetWorldRotation(FRotator(0, 0, 0));
+	//RootComponent->SetWorldScale3D(FVector(1.0, PuyoConfig-> StageCols, PuyoConfig->StageRows));
 
 	//Get PuyoMesh Actor
-	PuyoMesh = Cast<APuyoMesh>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoMesh::StaticClass()));
+	MorphPuyoMesh = Cast<AMorphPuyoMesh>(UGameplayStatics::GetActorOfClass(GetWorld(), AMorphPuyoMesh::StaticClass()));
 
 	//Prepare memory
-	TArray<FPuyoMemoryData> ZeroArray;
 	ZeroArray.Init({0, nullptr}, PuyoConfig->StageCols);
 	for(int32 i = 0 ; i<PuyoConfig->StageRows;++i)
 	{
@@ -57,10 +57,10 @@ void AStagePawn::Initialize(APuyoConfigActor* Config)
 	PuyoCount = 0;
 	for(int32 z=0;z<PuyoConfig->StageRows;++z)
 	{
-		TArray<FPuyoMemoryData> Line = Board[z];
+		Line = Board[z];
 		for(int32 y=0;y<PuyoConfig->StageCols;++y)
 		{
-			FPuyoMemoryData Puyo = Line[y];
+			Puyo = Line[y];
 			if(Puyo.Puyo >= 1 && Puyo.Puyo <= 5)
 			{
 				SetPuyo(Puyo.Puyo, y, z);
@@ -78,16 +78,15 @@ void AStagePawn::Initialize(APuyoConfigActor* Config)
 }
 
 //Set puyo color index and StaticMeshActor
-void AStagePawn::SetPuyo(int Puyo, int32 y, int32 z)
+void AStagePawn::SetPuyo(int PuyoCol, int32 y, int32 z)
 {
-	if(PuyoMesh)
+	if(MorphPuyoMesh)
 	{
 		//Get PuyoMeshActor
-		AStaticMeshActor* FixedPuyoMeshActor = PuyoMesh->GetPuyo(Puyo);
+		AMorphPuyoActor* FixedPuyoMeshActor = MorphPuyoMesh->GetMorphPuyo(PuyoCol);
 		FixedPuyoMeshActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoConfig->PuyoMeshWidth * y, PuyoConfig->PuyoMeshHeight * -z));
-
-		Board[z][y] = {Puyo, FixedPuyoMeshActor};
-
+		
+		Board[z][y] = {PuyoCol, FixedPuyoMeshActor};
 	}
 	// ShowArray();
 }
@@ -97,16 +96,25 @@ void AStagePawn::ShowArray()
 	TArray<FString> Array;
 	for(int32 i = 0; i < Board.Num(); ++i)
 	{
-		FString Line;
+		FString LineName;
 		for(int32 j = 0; j < Board[i].Num(); ++j)
 		{
-			Line += FString::FromInt(Board[i][j].Puyo);
+			LineName += FString::FromInt(Board[i][j].Puyo);
 		}
-		Array.Add(Line);
+		Array.Add(LineName);
 	}
 	UE_LOG(LogTemp, Log, TEXT("Array is: %s"), *FString::Join(Array, TEXT("\n")));
 	
 }
+
+
+
+void AStagePawn::SpawnPuyoMesh()
+{
+	PuyoMeshClass = GetWorld()->SpawnActor<AMorphPuyoMesh>(AMorphPuyoMesh::StaticClass());
+}
+
+
 
 //Check freefall
 bool AStagePawn::CheckFall()
@@ -117,7 +125,7 @@ bool AStagePawn::CheckFall()
 	//check from bottom to top
 	for(int32 z = PuyoConfig->StageRows - 2; z >= 0; z--)
 	{
-		TArray<FPuyoMemoryData> Line = Board[z];
+		Line = Board[z];
 		for(int32 y = 0; y < Line.Num(); y++)
 		{
 			if(Board[z][y].Puyo == 0)
@@ -128,7 +136,7 @@ bool AStagePawn::CheckFall()
 			if(Board[z+1][y].Puyo == 0)
 			{
 				//this puyo is gonna fall, so remove it
-				FPuyoMemoryData cell = Board[z][y];
+				cell = Board[z][y];
 				Board[z][y] = {0, nullptr};
 				int32 Dst = z;
 				while(Dst + 1 < PuyoConfig->StageRows && Board[Dst+1][y].Puyo == false)
@@ -146,6 +154,33 @@ bool AStagePawn::CheckFall()
 		}
 	}
 	return bIsFalling;
+}
+
+void AStagePawn::CheckAndMorphPuyo(int32 y, int32 z)
+{
+	AMorphPuyoActor* FixedPuyoMeshActor = Board[z][y].PuyoMeshActor;
+	//initialize morph
+	FixedPuyoMeshActor->BackToNormal();
+	
+	//check 4 directions
+	TArray<TArray<int32>> NeighborPuyosPos = {{1,0},{-1,0},{0,1},{0,-1}};
+	TArray<EMorphState> MorphEventArray = {right, left, up, down};
+	TArray<EMorphState> MorphEventOpoArray = {left, right, down, up};
+	int32 PuyoCol = Board[z][y].Puyo;
+	for(int32 i = 0; i < NeighborPuyosPos.Num(); ++i)
+	{
+		int32 NeighborY = y + NeighborPuyosPos[i][0];
+		int32 NeighborZ = z + NeighborPuyosPos[i][1];
+		if(NeighborY >= 0 && NeighborY < PuyoConfig->StageCols && NeighborZ >= 0 && NeighborZ < PuyoConfig->StageRows)
+		{
+			if(Board[NeighborZ][NeighborY].Puyo == PuyoCol)
+			{
+				//if neighbor puyo is same color, morph it
+				FixedPuyoMeshActor->MorphPuyo(MorphEventArray[i]);
+				Board[NeighborZ][NeighborY].PuyoMeshActor->MorphPuyo(MorphEventOpoArray[i]);
+			}
+		}
+	}
 }
 
 //Free fall
@@ -177,6 +212,7 @@ bool AStagePawn::Fall()
 		//move puyo
 		PuyoMeshActor = FallingPuyoArray[i].PuyoMemoryData.PuyoMeshActor;
 		PuyoMeshActor->SetActorLocation(FVector(PuyoConfig->PosX, PuyoMeshActor->GetActorLocation().Y, -PosZ));
+		//CheckAndMorphPuyo(int32(PuyoMeshActor->GetActorLocation().Y / PuyoConfig->PuyoMeshWidth), int32(PosZ / PuyoConfig->PuyoMeshHeight));
 	}
 	return  bIsFalling;
 }
@@ -204,7 +240,7 @@ TArray<int32> AStagePawn::CheckErase(int32 InStartFrame)
 			return;
 		}
 		//if exist, it avoid temporary and erase from memory
-		FPuyoMemoryData Puyo = this->Board[z][y];
+		Puyo = this->Board[z][y];
 		SequencePuyoArray.Push({y, z, this->Board[z][y]});
 		this->Board[z][y] = {0, nullptr};
 
@@ -218,7 +254,7 @@ TArray<int32> AStagePawn::CheckErase(int32 InStartFrame)
 				//out of stage
 				continue;
 			}
-			FPuyoMemoryData cell = this->Board[dz][dy];
+			cell = this->Board[dz][dy];
 			if(!cell.Puyo || cell.Puyo != Puyo.Puyo)
 			{
 				//if not exist or not same color, do nothing
@@ -265,7 +301,7 @@ TArray<int32> AStagePawn::CheckErase(int32 InStartFrame)
 	for(FPuyoEraseData info : ExistingPuyoArray)
 	{
 		Board[info.Z][info.Y] = info.Cell;
-		
+		CheckAndMorphPuyo(info.Y, info.Z);
 	}
 
 	if(ErasingPuyoArray.Num())
@@ -282,7 +318,7 @@ bool AStagePawn::Erasing(int32 frame)
 {
 	for(FPuyoEraseData info: ErasingPuyoArray)
 	{
-		PuyoMesh->DestroyPuyo(info.Cell.PuyoMeshActor);
+		MorphPuyoMesh->DestroyMorphPuyo(info.Cell.PuyoMeshActor);
 	}
 	return false;
 }
@@ -295,7 +331,7 @@ void AStagePawn::DestroyAllPuyo()
 		{
 			if(Board[z][y].Puyo)
 			{
-				PuyoMesh->DestroyPuyo(Board[z][y].PuyoMeshActor);
+				MorphPuyoMesh->DestroyMorphPuyo(Board[z][y].PuyoMeshActor);
 				Board[z][y] = {0, nullptr};
 			}
 		}

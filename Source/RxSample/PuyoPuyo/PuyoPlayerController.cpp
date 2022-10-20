@@ -2,6 +2,7 @@
 
 
 #include "PuyoPlayerController.h"
+
 #include "Kismet/GameplayStatics.h"
 
 APuyoPlayerController::APuyoPlayerController()
@@ -15,10 +16,14 @@ void APuyoPlayerController::BeginPlay()
 	//Get Actors
 	StagePawn = Cast<AStagePawn>(GetPawn());
 	PuyoConfig = Cast<APuyoConfigActor>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoConfigActor::StaticClass()));
-	PuyoMeshActor = Cast<APuyoMesh>(UGameplayStatics::GetActorOfClass(GetWorld(), APuyoMesh::StaticClass()));
+	//initialize StagePawn
+    StagePawn->Initialize(PuyoConfig);
+	
+	
 	PlayerState = Cast<APuyoPlayState>(StagePawn->GetPlayerState());
 	PuyoHUD = Cast<APuyoHUD>(GetHUD());
-
+	CameraSwitchingActor = Cast<ACameraSwitchingActor>(UGameplayStatics::GetActorOfClass(GetWorld(), ACameraSwitchingActor::StaticClass()));
+	ScoreTextThreeDActor = Cast<AScoreTextThreeDActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AScoreTextThreeDActor::StaticClass()));
 	
 	//initialize this class
 	KeyStatus = { false, false, false, false };
@@ -37,8 +42,7 @@ void APuyoPlayerController::BeginPlay()
 	frame = 0;
 
 	
-	//initialize StagePawn
-	StagePawn->Initialize(PuyoConfig);
+	
 
 	
 	//initialize PlayerState
@@ -49,8 +53,15 @@ void APuyoPlayerController::BeginPlay()
 	
 	//initialize PuyoHUD
 	PuyoHUD->ShowTitleWidget();
+
+	//initialize CameraSwitchingActor
+	CameraSwitchingActor->SwitchTitleCamera();
+
+	//initialize ScoreTextThreeDActor
+	ScoreTextThreeDActor->ShowScoreText(PlayerState->GetScore());
 }
 
+//main function
 void APuyoPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
@@ -62,9 +73,13 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 		{
 			PuyoHUD->ShowTitleWidget();
 		}
+		
+		//OnPress Start Button
+		//bIsLobby = true
 		if(!PuyoHUD->GetIsLobby())
 		{
 			PlayerState->SetState(start);
+			CameraSwitchingActor->SwitchPlayCamera();
 			if(PuyoHUD->IsTitleWidgetViewport())
 			{
 				PuyoHUD->HideTitleWidget();
@@ -72,7 +87,7 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 				
 				PuyoHUD->HideGameOverText();
 				PlayerState->SetScore(0);
-				PuyoHUD->ShowScoreText(PlayerState->GetScore());
+				ScoreTextThreeDActor->ShowScoreText(PlayerState->GetScore());
 			}
 		}
 		break;
@@ -95,6 +110,7 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 		if(!StagePawn->Fall())
 		{
 			PlayerState->SetState(checkErase);
+			
 		}
 		break;
 		
@@ -107,13 +123,13 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 			PlayerState->SetState(erase);
 			PlayerState->IncrementCombo();
 			PlayerState->CalcScore(PlayerState->GetCombo(), EraseInfo[0], EraseInfo[1]);
-			PuyoHUD->ShowScoreText(PlayerState->GetScore());
+			ScoreTextThreeDActor->ShowScoreText(PlayerState->GetScore());
 		}else
 		{
 			if(StagePawn->PuyoCount == 0 && PlayerState->GetCombo() > 0)
 			{
 				PlayerState->UpdateScore(3600);
-				PuyoHUD->ShowScoreText(PlayerState->GetScore());
+				ScoreTextThreeDActor->ShowScoreText(PlayerState->GetScore());
 			}
 			PlayerState->SetCombo(0);
 			PlayerState->SetState(newPuyo);
@@ -170,9 +186,11 @@ void APuyoPlayerController::PlayerTick(float DeltaTime)
 			PuyoHUD->ShowTitleWidget();
 		}
 		PlayerState->SetState(lobby);
+		CameraSwitchingActor->SwitchTitleCamera();
 		break;
 	}
 	frame++;
+	StagePawn->ShowArray();
 }
 
 bool APuyoPlayerController::CreateNewPuyo()
@@ -189,8 +207,8 @@ bool APuyoPlayerController::CreateNewPuyo()
 	MovablePuyoColor = FMath::Floor(FMath::FRand() * PuyoColors) + 1;
 
 	//generate new puyo
-	CenterPuyoActor = PuyoMeshActor->GetPuyo(CenterPuyoColor);
-	MovablePuyoActor = PuyoMeshActor->GetPuyo(MovablePuyoColor);
+	CenterPuyoActor = StagePawn->MorphPuyoMesh->GetMorphPuyo(CenterPuyoColor);
+	MovablePuyoActor = StagePawn->MorphPuyoMesh->GetMorphPuyo(MovablePuyoColor);
 
 	//Be child to Stage
 	//set initial location of puyo
@@ -548,6 +566,8 @@ void APuyoPlayerController::Fix()
 		StagePawn->SetPuyo(MovablePuyoColor, y + dy, z + dz);
 		StagePawn->PuyoCount++;
 	}
+	StagePawn->CheckAndMorphPuyo(y, z);
+	StagePawn->CheckAndMorphPuyo(y + dy, z + dz);
 	//destroy puyo that is prepared for operating
 	CenterPuyoActor->Destroy();
 	MovablePuyoActor->Destroy();
@@ -583,39 +603,71 @@ bool APuyoPlayerController::IsValidIndex(TArray<TYPE> Array, int32 y, int32 z)
 void APuyoPlayerController::PressLeft()
 {
 	KeyStatus.Left = true;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOnLeftColor();
+	}
 }
 
 void APuyoPlayerController::PressRight()
 {
 	KeyStatus.Right = true;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOnRightColor();
+	}
 }
 
 void APuyoPlayerController::PressDown()
 {
 	KeyStatus.Down = true;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOnDownColor();
+	}
 }
 
 void APuyoPlayerController::PressUp()
 {
 	KeyStatus.Up = true;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOnUpColor();
+	}
 }
 
 void APuyoPlayerController::ReleaseLeft()
 {
 	KeyStatus.Left = false;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOffLeftColor();
+	}
 }
 
 void APuyoPlayerController::ReleaseRight()
 {
 	KeyStatus.Right = false;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOffRightColor();
+	}
 }
 
 void APuyoPlayerController::ReleaseDown()
 {
 	KeyStatus.Down = false;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOffDownColor();
+	}
 }
 
 void APuyoPlayerController::ReleaseUp()
 {
 	KeyStatus.Up = false;
+	if(PuyoHUD->ScoreWidget)
+	{
+		PuyoHUD->ScoreWidget->TurnOffUpColor();
+	}
 }

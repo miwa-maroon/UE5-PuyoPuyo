@@ -10,16 +10,16 @@
 
 APuyoGameModeBase::APuyoGameModeBase()
 {
-	PlayerControllerClass = APuyoPlayerController::StaticClass();
-	DefaultPawnClass = AStagePawn::StaticClass();
-	PlayerStateClass = APuyoPlayState::StaticClass();
-	HUDClass = APuyoHUD::StaticClass();
+	// PlayerControllerClass = APuyoPlayerController::StaticClass();
+	// DefaultPawnClass = AMorphStagePawn::StaticClass();
+	// PlayerStateClass = APuyoPlayState::StaticClass();
+	// HUDClass = APuyoHUD::StaticClass();
 }
 
 void APuyoGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
-	PuyoMesh = GetWorld()->SpawnActor<APuyoMesh>(APuyoMesh::StaticClass());
+	
 }
 
 

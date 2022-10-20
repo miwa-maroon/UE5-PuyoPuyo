@@ -10,6 +10,8 @@
 #include "StagePawn.h"
 #include "PuyoMesh.h"
 #include "PuyoPlayState.h"
+#include "CameraSwitchingActor.h"
+#include "ScoreTextThreeDActor.h"
 #include "PuyoPlayerController.generated.h"
 
 /**
@@ -57,6 +59,8 @@ private:
 	AStagePawn* StagePawn;
 	APuyoPlayState* PlayerState;
 	APuyoHUD* PuyoHUD;
+	ACameraSwitchingActor* CameraSwitchingActor;
+	AScoreTextThreeDActor* ScoreTextThreeDActor;
 
 	int32 frame;
 	EStateEnum action;
@@ -67,8 +71,8 @@ private:
 	int32 GroundFrame;
 
 	APuyoMesh* PuyoMeshActor;
-	AStaticMeshActor* CenterPuyoActor;
-	AStaticMeshActor* MovablePuyoActor;
+	AMorphPuyoActor* CenterPuyoActor;
+	AMorphPuyoActor* MovablePuyoActor;
 	UStaticMesh* PuyoMesh;
 
 	int32 ActionStartFrame;
@@ -80,7 +84,7 @@ private:
 
 	template <typename TYPE>
 	bool IsValidIndex(TArray<TYPE> Array, int32 y, int32 z);
-
+	
 	void PressLeft();
 	void PressRight();
 	void PressDown();
