@@ -158,6 +158,10 @@ bool AStagePawn::CheckFall()
 
 void AStagePawn::CheckAndMorphPuyo(int32 y, int32 z)
 {
+	if(y < 0 || y > PuyoConfig->StageCols || z < 0 || z > PuyoConfig->StageRows)
+	{
+		return;
+	}
 	AMorphPuyoActor* FixedPuyoMeshActor = Board[z][y].PuyoMeshActor;
 	//initialize morph
 	FixedPuyoMeshActor->BackToNormal();
