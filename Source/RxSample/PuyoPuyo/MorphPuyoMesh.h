@@ -20,7 +20,7 @@ public:
 	AMorphPuyoActor* GetMorphPuyo(int32 colorIndex);
 	void DestroyMorphPuyo(AMorphPuyoActor* InMorphPuyo);
 private:
-	TArray<FString> m_MorphPuyoColors = {"purple", "blue", "green", "yellow", "red"};
+	TArray<FString> m_MorphPuyoColors = {"red", "blue", "green", "yellow", "purple"};
 
 	UPROPERTY(EditAnywhere)
 	FString PathMorphPuyoBP = "/Game/Blueprints/BP_PuyoActor.BP_PuyoActor_C";

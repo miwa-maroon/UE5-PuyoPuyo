@@ -41,9 +41,7 @@ void APuyoPlayerController::BeginPlay()
 
 	frame = 0;
 
-	
-	
-
+	SetShowMouseCursor(true);
 	
 	//initialize PlayerState
 	PlayerState->SetState(lobby);
